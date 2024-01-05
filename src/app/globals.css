@@ -18,10 +18,59 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: #252525;
+}
+
+.pattern-border {
+  background-image: url('../../public/newtop2.svg');
+  position: relative;
+  background-size: contain;
+  border-radius: 1px;
+}
+
+.faded-pattern {
+  position: relative;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+
+  border-radius: 1px;
+}
+
+.faded-pattern:before{
+  content: ' ';
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url('../../public/newtop.svg');
+  background-repeat: no-repeat;
+  background-position: 50% 0;
+  background-size: cover;
+  background-color: #252525;
+
+  border-radius: 1px;
+}
+
+.main-icons:before {
+  content: ' ';
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url('../../public/main-icons.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.faded-pattern:before {
+  opacity: 1;
+}
+
+.loading-pattern:before {}
+
+
+canvas {
+  position: absolute;
+  top: 0;
 }

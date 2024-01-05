@@ -1,113 +1,274 @@
+"use client"; 
 import Image from 'next/image'
+import { useEffect } from 'react';
+import * as THREE from 'three';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 export default function Home() {
+  useEffect(() => {
+    let camera, scene, light, renderer, CSSRenderer
+    let root, ring, CSSPlane
+    
+    function makeElementObject( width, height,css3dObject) {
+
+      const obj = new THREE.Object3D
+
+      obj.css3dObject = css3dObject
+      obj.add(css3dObject)
+
+  
+      // make an invisible plane for the DOM element to chop
+      // clip a WebGL geometry with it.
+      var material = new THREE.MeshPhongMaterial({
+          opacity	: 0.1,
+          color	: new THREE.Color( 0x101010 ),
+          blending: THREE.CustomBlending,
+          blendEquation: THREE.SubtractEquation,
+          blendSrc: THREE.SrcAlphaFactor,
+          blendDst: THREE.OneFactor,
+          // blendEquation: THREE.SubtractEquation,
+          // blendSrc: THREE.SrcAlphaFactor,
+          // blendDst: THREE.OneMinusSrcAlphaFactor,
+          transparent: true,
+          // side	: THREE.DoubleSide,
+      });
+      var geometry = new THREE.BoxGeometry( width + 3, height, 1 );
+      var mesh2 = new THREE.Mesh( geometry, material );
+      mesh2.castShadow = false
+      mesh2.receiveShadow = false
+      obj.lightShadowMesh = mesh2
+      obj.add( mesh2 );
+  
+      obj.position.set(0,0,-50)
+
+      return obj
+    }
+
+
+    init()
+
+    function init() {
+
+      // create root object group
+      root = new THREE.Object3D()
+
+      // Create Scene
+      scene = new THREE.Scene();
+
+
+      // Create Camera
+      camera = new THREE.PerspectiveCamera(
+        45, // Field of view
+        window.innerWidth / window.innerHeight, // Aspect ratio
+        0.1, // Near
+        10000 // Far
+      );
+
+
+      
+         // light
+      var ambientLight = new THREE.AmbientLight( 0xffffff, 4 );
+      ambientLight.castShadow  = true
+      scene.add( ambientLight );
+
+
+      light = new THREE.PointLight( 0xffffff, 600, 40);
+      light.castShadow = true
+      light.position.z = 10
+      light.position.y = -20
+
+      // scene.add( new THREE.PointLightHelper( light, 10 ) )
+
+      root.add( light );
+
+      // Create Topographic Square    
+      let squareWidth = 40;
+      let squareHeight= 40;
+
+      const element = document.createElement( "div" );
+      element.style.width = squareWidth+'px';
+      element.style.height = squareHeight+'px';
+      element.style.opacity = "1";
+      const childElement = document.createElement( 'div' );
+      element.appendChild(childElement)
+      element.className = 'pattern-border';
+      childElement.className = 'faded-pattern';
+      childElement.style.width = 39.5+'px';
+      childElement.style.height = 39.5+'px';
+
+
+      var css3dObject = new CSS3DObject( element );
+      css3dObject.position.z = 0
+      css3dObject.position.y = 15
+      
+      let CSSPlane = makeElementObject( squareWidth, squareHeight, css3dObject)  
+
+      
+      root.add( CSSPlane  );
+
+      // Create shape logo
+      const shapeLogotexture = new THREE.TextureLoader().load( "../../public/newtop.png" );
+ 
+      const shapeLogoMaterial = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide, map:shapeLogotexture  } );
+
+      const shapeLogoGeometry = new THREE.RingGeometry(1.2, 1, 60 ); 
+      const shapeLogoMesh = new THREE.Mesh( shapeLogoGeometry, shapeLogoMaterial ); 
+        shapeLogoMesh.position.z = -1;
+      root.add(shapeLogoMesh)
+
+      function addShape(shape, extrudeSettings, color, x, y, z, rx, ry, rz, s) {
+        addLineShape(shape, color, x, y, z, rx, ry, rz, s);
+      }
+
+      function addLineShape(shape, color, x, y, z, rx, ry, rz, s) {
+        // lines
+    
+        shape.autoClose = true;
+    
+        var points = shape.getPoints();
+        var spacedPoints = shape.getSpacedPoints(50);
+    
+        var geometryPoints = new THREE.BufferGeometry().setFromPoints(points);
+        var geometrySpacedPoints = new THREE.BufferGeometry().setFromPoints(
+          spacedPoints
+        );
+    
+        // solid line
+    
+        var line = new THREE.Line(
+          geometryPoints,
+          new THREE.LineBasicMaterial({ color: color, map: shapeLogotexture })
+        );
+        line.position.set(0,0,0,0);
+        line.rotation.set(rx, ry, rz);
+        line.scale.set(s, s, s);
+        root.add(line)
+    
+      }
+
+        // Rounded rectangle
+
+  var roundedRectShape = new THREE.Shape();
+
+
+
+  (function roundedRect(ctx, x, y, width, height, radius) {
+    ctx.moveTo(x, y + radius);
+    ctx.lineTo(x, y + height - radius);
+    ctx.quadraticCurveTo(x, y + height, x + radius, y + height);
+    ctx.lineTo(x + width - radius, y + height);
+    ctx.quadraticCurveTo(x + width, y + height, x + width, y + height - radius);
+    ctx.lineTo(x + width, y + radius);
+    ctx.quadraticCurveTo(x + width, y, x + width - radius, y);
+    ctx.lineTo(x + radius, y);
+    ctx.quadraticCurveTo(x, y, x, y + radius);
+  })(roundedRectShape, 0, 0, 5, 5, 2);
+
+  var extrudeSettings = {
+    depth: 8,
+    bevelEnabled: true,
+    bevelSegments: 2,
+    steps: 2,
+    bevelSize: 1,
+    bevelThickness: 1
+  };
+  addShape(
+    roundedRectShape,
+    extrudeSettings,
+    0xffffff,
+    -150,
+    150,
+    0,
+    0,
+    0,
+    0,
+    1
+  );
+
+      // Create Ring
+      var material = new THREE.MeshLambertMaterial({
+        color: 0x181818,
+        side: THREE.DoubleSide,
+     })
+
+    var outerRadius = 35;
+    var innerRadius = 30;
+    var height = 10;
+
+      var arcShape = new THREE.Shape();
+      arcShape.moveTo(outerRadius * 2, outerRadius);
+      arcShape.absarc(outerRadius, outerRadius, outerRadius, 0, Math.PI * 2, false);
+      var holePath = new THREE.Path();
+      holePath.moveTo(outerRadius + innerRadius, outerRadius);
+      holePath.absarc(outerRadius, outerRadius, innerRadius, 0, Math.PI * 2, true);
+      arcShape.holes.push(holePath);
+      
+      var geometry = new THREE.ExtrudeGeometry(arcShape, {
+        depth: height,
+        bevelEnabled: false,
+        steps: 1,
+        curveSegments: 1000
+      });
+
+      geometry.center();
+      geometry.rotateX(Math.PI * -.5);
+      ring = new THREE.Mesh(geometry, material);
+      ring.position.z = -50
+      ring.position.y = 0
+      ring.castShadow = true;
+      ring.receiveShadow = false;
+      root.add(ring)
+
+      // Add root group to the scene
+      scene.add(root)
+
+      // Setup Renderers
+      CSSRenderer = new CSS3DRenderer();
+      CSSRenderer.setSize(innerWidth, innerHeight);
+      document.querySelector('#css').appendChild(CSSRenderer.domElement);
+      
+      // Put the mainRenderer on top
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setClearColor(0x000000, 0);
+      renderer.domElement.style.position = 'absolute';
+      renderer.domElement.style.top = 0;
+      renderer.domElement.style.zIndex = 1;
+      renderer.setSize(innerWidth, innerHeight);
+      CSSRenderer.domElement.appendChild(renderer.domElement);
+      
+
+      const controls = new OrbitControls( camera, renderer.domElement );
+
+      //controls.update() must be called after any manual changes to the camera's transform
+      camera.position.set( 0, 0, 100)
+      controls.update();
+
+      function render() {
+        requestAnimationFrame(render);
+        CSSRenderer.render( scene, camera );
+        renderer.render(scene, camera);
+  
+      }
+
+      render();
+
+      
+      // //Helpers
+      // const axesHelper = new THREE.AxesHelper(10 );
+      // scene.add( axesHelper );
+  
+    }
+
+
+});
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    <main className="flex min-h-screen flex-col items-center justify-between p-24 ">
+       <div  className="rounded-lg">
+        <div id="css"></div>
+          <div className="loading-pattern rounded-lg">
+          </div>
+       </div>
     </main>
   )
 }
