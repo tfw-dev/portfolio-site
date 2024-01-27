@@ -9,7 +9,8 @@ export default function Home() {
   useEffect(() => {
     let camera, scene, light, renderer, CSSRenderer
     let root, ring, CSSPlane
-    
+    THREE.ColorManagement.enabled = true;
+
     function makeElementObject( width, height,css3dObject) {
 
       const obj = new THREE.Object3D
@@ -17,7 +18,6 @@ export default function Home() {
       obj.css3dObject = css3dObject
       obj.add(css3dObject)
 
-  
       // make an invisible plane for the DOM element to chop
       // clip a WebGL geometry with it.
       var material = new THREE.MeshPhongMaterial({
@@ -33,6 +33,7 @@ export default function Home() {
           transparent: true,
           // side	: THREE.DoubleSide,
       });
+
       var geometry = new THREE.BoxGeometry( width + 3, height, 1 );
       var mesh2 = new THREE.Mesh( geometry, material );
       mesh2.castShadow = false
@@ -56,7 +57,6 @@ export default function Home() {
       // Create Scene
       scene = new THREE.Scene();
 
-
       // Create Camera
       camera = new THREE.PerspectiveCamera(
         45, // Field of view
@@ -65,13 +65,10 @@ export default function Home() {
         10000 // Far
       );
 
-
-      
-         // light
+      // light
       var ambientLight = new THREE.AmbientLight( 0xffffff, 4 );
       ambientLight.castShadow  = true
       scene.add( ambientLight );
-
 
       light = new THREE.PointLight( 0xffffff, 600, 40);
       light.castShadow = true
@@ -79,7 +76,6 @@ export default function Home() {
       light.position.y = -20
 
       // scene.add( new THREE.PointLightHelper( light, 10 ) )
-
       root.add( light );
 
       // Create Topographic Square    
@@ -108,16 +104,16 @@ export default function Home() {
       root.add( CSSPlane  );
 
       // Create shape logo
-      const shapeLogotexture = new THREE.TextureLoader().load( "../../public/newtop.png" );
+      const shapeLogotexture = new THREE.TextureLoader().load( "/newtop.png" );
  
-      const shapeLogoMaterial = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide, map:shapeLogotexture  } );
+      const shapeLogoMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, side: THREE.DoubleSide, map:shapeLogotexture  } );
 
       const shapeLogoGeometry = new THREE.RingGeometry(1.2, 1, 60 ); 
       const shapeLogoMesh = new THREE.Mesh( shapeLogoGeometry, shapeLogoMaterial ); 
-        shapeLogoMesh.position.z = -1;
+      shapeLogoMesh.position.z = -1;
       root.add(shapeLogoMesh)
 
-      function addShape(shape, extrudeSettings, color, x, y, z, rx, ry, rz, s) {
+      function addShape(shape, color, x, y, z, rx, ry, rz, s) {
         addLineShape(shape, color, x, y, z, rx, ry, rz, s);
       }
 
@@ -130,15 +126,12 @@ export default function Home() {
         var spacedPoints = shape.getSpacedPoints(50);
     
         var geometryPoints = new THREE.BufferGeometry().setFromPoints(points);
-        var geometrySpacedPoints = new THREE.BufferGeometry().setFromPoints(
-          spacedPoints
-        );
+     
     
         // solid line
-    
         var line = new THREE.Line(
           geometryPoints,
-          new THREE.LineBasicMaterial({ color: color, map: shapeLogotexture })
+          new THREE.LineBasicMaterial({ color: color, map: shapeLogotexture, linewidth:50})
         );
         line.position.set(0,0,0,0);
         line.rotation.set(rx, ry, rz);
@@ -165,17 +158,8 @@ export default function Home() {
     ctx.quadraticCurveTo(x, y, x, y + radius);
   })(roundedRectShape, 0, 0, 5, 5, 2);
 
-  var extrudeSettings = {
-    depth: 8,
-    bevelEnabled: true,
-    bevelSegments: 2,
-    steps: 2,
-    bevelSize: 1,
-    bevelThickness: 1
-  };
   addShape(
     roundedRectShape,
-    extrudeSettings,
     0xffffff,
     -150,
     150,
@@ -235,6 +219,8 @@ export default function Home() {
       renderer.domElement.style.top = 0;
       renderer.domElement.style.zIndex = 1;
       renderer.setSize(innerWidth, innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace; // optional with post-processing
+      
       CSSRenderer.domElement.appendChild(renderer.domElement);
       
 
