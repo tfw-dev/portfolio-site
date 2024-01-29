@@ -4,47 +4,50 @@ import { useEffect } from 'react';
 import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+
+import topographicPattern from '../../public/topographic-pattern.png'
 
 export default function Home() {
   useEffect(() => {
     let camera, scene, light, renderer, CSSRenderer
-    let root, ring, CSSPlane
+    let root, ring
     THREE.ColorManagement.enabled = true;
 
-    function makeElementObject( width, height,css3dObject) {
+    // function makeElementObject( width, height,css3dObject) {
 
-      const obj = new THREE.Object3D
+    //   const obj = new THREE.Object3D
 
-      obj.css3dObject = css3dObject
-      obj.add(css3dObject)
+    //   obj.css3dObject = css3dObject
+    //   obj.add(css3dObject)
 
-      // make an invisible plane for the DOM element to chop
-      // clip a WebGL geometry with it.
-      var material = new THREE.MeshPhongMaterial({
-          opacity	: 0.1,
-          color	: new THREE.Color( 0x101010 ),
-          blending: THREE.CustomBlending,
-          blendEquation: THREE.SubtractEquation,
-          blendSrc: THREE.SrcAlphaFactor,
-          blendDst: THREE.OneFactor,
-          // blendEquation: THREE.SubtractEquation,
-          // blendSrc: THREE.SrcAlphaFactor,
-          // blendDst: THREE.OneMinusSrcAlphaFactor,
-          transparent: true,
-          // side	: THREE.DoubleSide,
-      });
+    //   // make an invisible plane for the DOM element to chop
+    //   // clip a WebGL geometry with it.
+    //   var material = new THREE.MeshPhongMaterial({
+    //       opacity	: 0.1,
+    //       color	: new THREE.Color( 0x101010 ),
+    //       blending: THREE.CustomBlending,
+    //       blendEquation: THREE.SubtractEquation,
+    //       blendSrc: THREE.SrcAlphaFactor,
+    //       blendDst: THREE.OneFactor,
+    //       // blendEquation: THREE.SubtractEquation,
+    //       // blendSrc: THREE.SrcAlphaFactor,
+    //       // blendDst: THREE.OneMinusSrcAlphaFactor,
+    //       transparent: true,
+    //       // side	: THREE.DoubleSide,
+    //   });
 
-      var geometry = new THREE.BoxGeometry( width + 3, height, 1 );
-      var mesh2 = new THREE.Mesh( geometry, material );
-      mesh2.castShadow = false
-      mesh2.receiveShadow = false
-      obj.lightShadowMesh = mesh2
-      obj.add( mesh2 );
+    //   var geometry = new THREE.BoxGeometry( width + 3, height, 1 );
+    //   var mesh2 = new THREE.Mesh( geometry, material );
+    //   mesh2.castShadow = false
+    //   mesh2.receiveShadow = false
+    //   obj.lightShadowMesh = mesh2
+    //   obj.add( mesh2 );
   
-      obj.position.set(0,0,-50)
+    //   obj.position.set(0,0,-50)
 
-      return obj
-    }
+    //   return obj
+    // }
 
 
     init()
@@ -98,15 +101,84 @@ export default function Home() {
       css3dObject.position.z = 0
       css3dObject.position.y = 15
       
-      let CSSPlane = makeElementObject( squareWidth, squareHeight, css3dObject)  
+      // let CSSPlane = makeElementObject( squareWidth, squareHeight, css3dObject)  
 
       
-      root.add( CSSPlane  );
+      // root.add( CSSPlane  );
+      let x = 1; let y = 1; let width = 50; let height1 = 50; let radius = 10
 
+      const svgLoader = new SVGLoader();
+
+      // const topoTexture = new THREE.TextureLoader().load('topographic-pattern.png'); 
+      // topoTexture.encoding = THREE.sRGBEncoding;
+      // topoTexture.repeat.x = 1;
+      // topoTexture.repeat.y = 1;
+
+      const loadingManager = new THREE.LoadingManager()
+      loadingManager.onStart = () => {
+        console.log('onStart')
+
+      }
+      loadingManager.onLoad = () => {
+        console.log('onLoad')
+
+      }
+      loadingManager.onProgress = () => {
+        console.log('onProgress')
+
+      }
+      loadingManager.onError = () => {
+        console.log('onError')
+
+      }
+      const textureLoader = new THREE.TextureLoader(loadingManager)
+      const texture = textureLoader.load(topographicPattern.src)
+      texture.anisotropy =  16;
+      texture.needsUpdate = true;
+      
+        const squareShape = new THREE.Shape();
+
+        squareShape.moveTo( x, y + radius );
+        squareShape.lineTo( x, y + height1 - radius );
+        squareShape.quadraticCurveTo( x, y + height1, x + radius, y + height1 );
+        squareShape.lineTo( x + width - radius, y + height1 );
+        squareShape.quadraticCurveTo( x + width, y + height1, x + width, y + height1 - radius );
+        squareShape.lineTo( x + width, y + radius );
+        squareShape.quadraticCurveTo( x + width, y, x + width - radius, y );
+        squareShape.lineTo( x + radius, y );
+        squareShape.quadraticCurveTo( x, y, x, y + radius );
+
+        const heartGeometry = new THREE.ShapeGeometry( squareShape );
+        const heartMaterial = new THREE.MeshBasicMaterial( {map: texture, transparent: true } );
+        
+        const mesh = new THREE.Mesh( heartGeometry, heartMaterial ) ;
+
+        let pos = heartGeometry.attributes.position;
+        let b3 = new THREE.Box3().setFromBufferAttribute(pos);
+        let b3size = new THREE.Vector3();
+        b3.getSize(b3size);
+        let uv = [];
+        for(let i = 0; i < pos.count; i++){
+          let x = pos.getX(i);
+          let y = pos.getY(i);
+          let u = (x - b3.min.x) / b3size.x;
+          let v = (y - b3.min.y) / b3size.y;
+          uv.push(u, v);
+        }
+        heartGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+
+        
+        mesh.position.z = -50;
+        mesh.position.x = -25;
+        mesh.position.y = -25;
+
+        scene.add( mesh );
+
+      
       // Create shape logo
       const shapeLogotexture = new THREE.TextureLoader().load( "/newtop.png" );
  
-      const shapeLogoMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, side: THREE.DoubleSide, map:shapeLogotexture  } );
+      const shapeLogoMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, side: THREE.DoubleSide, map:shapeLogotexture   } );
 
       const shapeLogoGeometry = new THREE.RingGeometry(1.2, 1, 60 ); 
       const shapeLogoMesh = new THREE.Mesh( shapeLogoGeometry, shapeLogoMaterial ); 
@@ -158,17 +230,6 @@ export default function Home() {
     ctx.quadraticCurveTo(x, y, x, y + radius);
   })(roundedRectShape, 0, 0, 5, 5, 2);
 
-  addShape(
-    roundedRectShape,
-    0xffffff,
-    -150,
-    150,
-    0,
-    0,
-    0,
-    0,
-    1
-  );
 
       // Create Ring
       var material = new THREE.MeshLambertMaterial({
@@ -213,7 +274,10 @@ export default function Home() {
       document.querySelector('#css').appendChild(CSSRenderer.domElement);
       
       // Put the mainRenderer on top
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true,  preserveDrawingBuffer: true
+ });
+      renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1)
+
       renderer.setClearColor(0x000000, 0);
       renderer.domElement.style.position = 'absolute';
       renderer.domElement.style.top = 0;
