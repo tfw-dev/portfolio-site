@@ -5,8 +5,15 @@ import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+
+import fragmentShader from '../app/shaders/fragmentShader'
+import vertexShader from '../app/shaders/vertex.glsl'
 
 import topographicPattern from '../../public/topographic-pattern.png'
+import bgGradient from '../../public/newtop.png'
 
 export default function Home() {
   useEffect(() => {
@@ -105,7 +112,7 @@ export default function Home() {
 
       
       // root.add( CSSPlane  );
-      let x = 1; let y = 1; let width = 50; let height1 = 50; let radius = 10
+      let x = 1; let y = 1; let width = 50; let height1 = 35; let radius = 10
 
       const svgLoader = new SVGLoader();
 
@@ -133,27 +140,130 @@ export default function Home() {
       }
       const textureLoader = new THREE.TextureLoader(loadingManager)
       const texture = textureLoader.load(topographicPattern.src)
+      const textureBG = textureLoader.load(bgGradient.src)
       texture.anisotropy =  16;
       texture.needsUpdate = true;
+      textureBG.anisotropy =  16;
+      textureBG.needsUpdate = true;
+
+      texture.offset.set(0.25,0.4)
+        // scale x2 horizontal
+        texture.repeat.set(0.65, 1);
+        // scale x2 vertical
+        texture.repeat.set(1, 0.2);
+        // scale x2 proportional
+        texture.repeat.set(0.60, 0.60);
+        const squareShapeTop = new THREE.Shape();
+        const squareShapeBot = new THREE.Shape();
+
+        texture.colorSpace = THREE.SRGBColorSpace
+        textureBG.colorSpace = THREE.SRGBColorSpace
+
+        squareShapeTop.moveTo( x, y + radius );
+        squareShapeTop.lineTo( x, y + height1 - radius );
+        squareShapeTop.quadraticCurveTo( x, y + height1, x + radius, y + height1 );
+        squareShapeTop.lineTo( x + width - radius, y + height1 );
+        squareShapeTop.quadraticCurveTo( x + width, y + height1, x + width, y + height1 - radius );
+        squareShapeTop.lineTo( x + width , y + radius );
+
+
+
+        squareShapeBot.moveTo( x, y + radius );
+        squareShapeBot.lineTo( x, y + height1 - radius );
+        squareShapeBot.quadraticCurveTo( x, y + height1, x + radius, y + height1 );
+        squareShapeBot.lineTo( x + width - radius, y + height1 );
+        squareShapeBot.quadraticCurveTo( x + width, y + height1, x + width, y + height1 - radius );
+        squareShapeBot.lineTo( x + width , y + radius );
+
+       
+
+        const squareShapeTopGeometry = new THREE.ShapeGeometry( squareShapeTop );
+        const squareShapeBotGeometry = new THREE.ShapeGeometry( squareShapeTop );
+
+
+          
+            console.log(squareShapeTop)
+   
+
+        const points1 = new Float32Array([
+          1,11,0,  // First vertex
+          1, 26, 0
+      ])
+
+      console.log(points1)
+      let points = [ 1, 0, 0 ]
+
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3( 1, 36, 0 ),
+        new THREE.Vector3( 11, 31, 0 ),
+        new THREE.Vector3( 11, 10, 0 )
+      ]);
+
+      const curvePoints = curve.getPoints( 50 );
+      for (let index = 0; index < curvePoints.length ; index++) {
+        points.push(
+          curvePoints[index].x,
+          curvePoints[index].y,
+          curvePoints[index].z
+        );
+      }
+
+      console.log(points)
+
+				const geometry1 = new LineGeometry()
+        geometry1.setPositions(points)
+
+				let matLine = new LineMaterial( {
+
+					color: 0xffffff,
+					linewidth: .01, // in world units with size attenuation, pixels otherwise
+
+
+				} );
+        var uniforms = {
+          texture: bgGradient.src
+      };
       
-        const squareShape = new THREE.Shape();
+     
+				let line = new Line2( geometry1, matLine );
+                line.scale.set( 1, 1, 1 );
 
-        squareShape.moveTo( x, y + radius );
-        squareShape.lineTo( x, y + height1 - radius );
-        squareShape.quadraticCurveTo( x, y + height1, x + radius, y + height1 );
-        squareShape.lineTo( x + width - radius, y + height1 );
-        squareShape.quadraticCurveTo( x + width, y + height1, x + width, y + height1 - radius );
-        squareShape.lineTo( x + width, y + radius );
-        squareShape.quadraticCurveTo( x + width, y, x + width - radius, y );
-        squareShape.lineTo( x + radius, y );
-        squareShape.quadraticCurveTo( x, y, x, y + radius );
+        scene.add(line)
 
-        const heartGeometry = new THREE.ShapeGeometry( squareShape );
+        line.position.z = -50;
+        line.position.x = -25;
+        line.position.y = 12;
+
+
+
         const heartMaterial = new THREE.MeshBasicMaterial( {map: texture, transparent: true } );
         
-        const mesh = new THREE.Mesh( heartGeometry, heartMaterial ) ;
+        const squareShapeTopMesh = new THREE.Mesh( squareShapeTopGeometry, heartMaterial ) ;
+        const squareShapeBotMesh = new THREE.Mesh( squareShapeTopGeometry, heartMaterial ) ;
 
-        let pos = heartGeometry.attributes.position;
+        const squareShapeTopEdges = new THREE.EdgesGeometry( squareShapeTopGeometry ); 
+        const squareShapeBotEdges = new THREE.EdgesGeometry( squareShapeBotGeometry ); 
+        const squareEdgesMaterial = new THREE.LineBasicMaterial( { map: textureBG } );
+
+
+        const squareShapeTopLine = new THREE.LineSegments(squareShapeTopEdges, squareEdgesMaterial ); 
+        const squareShapeBotLine = new THREE.LineSegments(squareShapeBotEdges, squareEdgesMaterial ); 
+
+        scene.add( squareShapeTopLine );
+        scene.add( squareShapeBotLine );
+
+
+        squareShapeTopLine.position.z = -50;
+        squareShapeTopLine.position.x = -25;
+        squareShapeTopLine.position.y = -10;
+
+
+        squareShapeBotLine.position.z = -50;
+        squareShapeBotLine.position.x = 27;
+        squareShapeBotLine.position.y = 12;
+        squareShapeBotLine.rotation.z =  Math.PI / 1;
+
+        let pos = squareShapeTopGeometry.attributes.position;
         let b3 = new THREE.Box3().setFromBufferAttribute(pos);
         let b3size = new THREE.Vector3();
         b3.getSize(b3size);
@@ -165,14 +275,23 @@ export default function Home() {
           let v = (y - b3.min.y) / b3size.y;
           uv.push(u, v);
         }
-        heartGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+        squareShapeTopGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
 
         
-        mesh.position.z = -50;
-        mesh.position.x = -25;
-        mesh.position.y = -25;
+        squareShapeTopMesh.position.z = -50;
+        squareShapeTopMesh.position.x = -25;
+        squareShapeTopMesh.position.y = -10;
 
-        scene.add( mesh );
+        squareShapeBotMesh.position.z = -50;
+        squareShapeBotMesh.position.x = 27;
+        squareShapeBotMesh.position.y = 12;
+        squareShapeBotMesh.rotation.z =  Math.PI / 1;
+
+
+
+
+        scene.add( squareShapeTopMesh );
+        scene.add( squareShapeBotMesh );
 
       
       // Create shape logo
@@ -283,7 +402,6 @@ export default function Home() {
       renderer.domElement.style.top = 0;
       renderer.domElement.style.zIndex = 1;
       renderer.setSize(innerWidth, innerHeight);
-      renderer.outputColorSpace = THREE.SRGBColorSpace; // optional with post-processing
       
       CSSRenderer.domElement.appendChild(renderer.domElement);
       
@@ -293,6 +411,7 @@ export default function Home() {
       //controls.update() must be called after any manual changes to the camera's transform
       camera.position.set( 0, 0, 100)
       controls.update();
+      renderer.outputColorSpace = THREE.SRGBColorSpace; // optional with post-processing
 
       function render() {
         requestAnimationFrame(render);
@@ -317,6 +436,8 @@ export default function Home() {
        <div  className="rounded-lg">
         <div id="css"></div>
           <div className="loading-pattern rounded-lg">
+          <fragmentShader></fragmentShader>
+          <vertexShader></vertexShader>
           </div>
        </div>
     </main>
