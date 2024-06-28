@@ -7,7 +7,7 @@ const nextConfig = {
       type: "asset/source",
     })
     return config
-  }
+  },
 }
 
 module.exports = nextConfig
