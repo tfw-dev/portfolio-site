@@ -10,7 +10,7 @@ import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-
+   
 // Custom Shaders
 import vertexShader from "../app/shaders/vertex.glsl?raw"
 import fragmentShader from "../app/shaders/fragment.glsl?raw"
@@ -18,6 +18,7 @@ import fragmentShader from "../app/shaders/fragment.glsl?raw"
 // Textures
 import topoPattern from '../../public/topographic-pattern.png'
 import backgroundGradient from '../../public/newtop.png'
+import backgroundGradient2 from '../../public/Red.jpeg'
 
 export default function Home() {
   useEffect(() => {
@@ -109,6 +110,8 @@ export default function Home() {
       const textureTop = textureLoader.load(topoPattern.src)
       const textureBot = textureLoader.load(topoPattern.src)
       const textureBG = textureLoader.load( backgroundGradient.src)
+      const textureBG2 = textureLoader.load( backgroundGradient2.src)
+
       
       textureTop.anisotropy =  16;
       textureBot.anisotropy =  16;
