@@ -70,7 +70,23 @@ body {
 .loading-pattern:before {}
 
 
+
+
 canvas {
   position: absolute;
   top: 0;
 }
+
+@font-face {
+  font-family: 'fot-rodin_prol';
+  src: url('../../public/FOT-Rodin\ Pro\ L.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+h1 {
+  color:white;
+  font-size: 30px;
+  font-family: fot-rodin_prol;
+}
+

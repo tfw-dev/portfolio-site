@@ -4,51 +4,43 @@ import { useEffect } from 'react';
 import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import{ FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
+import{ TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
+import { MeshLineGeometry, MeshLineMaterial, raycast } from 'meshline'
+import { gsap } from "gsap";
 
-// Line Addons
-import { Line2 } from 'three/addons/lines/Line2.js';
-import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
-   
-// Custom Shaders
-import vertexShader from "../app/shaders/vertex.glsl?raw"
-import fragmentShader from "../app/shaders/fragment.glsl?raw"
+
 
 // Textures
 import topoPattern from '../../public/topographic-pattern.png'
+import topoTextPattern from '../../public/topographic Pattern Text.png'
 import backgroundGradient from '../../public/newtop.png'
-import backgroundGradient2 from '../../public/Red.jpeg'
+
 
 export default function Home() {
   useEffect(() => {
     // Three.js Variables
 
-    interface threeJSObject{
-      [key: string]: Function
-    }
-
     let 
-    camera: threeJSObject , 
-    scene:  threeJSObject, 
-    light:  threeJSObject , 
-    renderer:  threeJSObject, 
-    CSSRenderer:  threeJSObject
-
-    let 
-    root:  threeJSObject , 
-    ring:  threeJSObject
+    camera: THREE.PerspectiveCamera, 
+    scene: THREE.Scene, 
+    ambientLight: THREE.AmbientLight , 
+    renderer:THREE.WebGLRenderer,
+    CSSRenderer: CSS3DRenderer,
+    root: THREE.Object3D
 
 
     // THREE.ColorManagement.enabled = true;
     function init() {
+      
 
       // create root object group
       root = new THREE.Object3D()
 
       // Set Scene
       scene = new THREE.Scene();
-
+      const axesHelper = new THREE.AxesHelper( 5 );
+      scene.add( axesHelper );
       // Set Camera
       camera = new THREE.PerspectiveCamera(
         45, // Field of view
@@ -58,70 +50,203 @@ export default function Home() {
       );
 
       // Set light
-      var light = new THREE.AmbientLight( 0xffffff, 4 );
+      var ambientLight = new THREE.AmbientLight( 0xffffff,9);
       // scene.add( new THREE.PointLightHelper( light, 10 ) )
-      root.add( light );
+      root.add( ambientLight );
 
+      let directionalLight = new THREE.DirectionalLight('#ffffff', 10)
+      directionalLight.position.set(1,-5, 10)
+      directionalLight.point
 
-      //Set Shape
-      const squareTopHalf = new THREE.Shape();
-      const squareBotHalf = new THREE.Shape();
+      scene.add(directionalLight)
 
-      interface ShapeObject {
-        moveTo: Function,
-        lineTo: Function,
-        quadraticCurveTo: Function
-      }
+      // Create a target object
+      const targetObject = new THREE.Object3D();
+      targetObject.position.set(0, 0, -50); // Set to the position of the geometry
+      scene.add(targetObject);
 
-      function setTopShape(shape: ShapeObject) {
+      // Set the target of the light
+      directionalLight.target = targetObject;
 
-      // Define Rounded Square Size
-      let x = 1; let y = 1; let width = 50; let height1 = 35; let radius = 10
-        shape.moveTo( x, y + radius ),
-        shape.lineTo( x, y + height1 - radius );
-        shape.quadraticCurveTo( x, y + height1, x + radius, y + height1 );
-        shape.lineTo( x + width - radius, y + height1 );
-        shape.quadraticCurveTo( x + width, y + height1, x + width, y + height1 - radius );
-        shape.lineTo( x + width , y + radius );
-      }
-
-      function setBotShape(shape: ShapeObject) {
-
-      // Define Rounded Square Size
-      let x = 1; let y = 1; let width = 50; let height1 = 35; let radius = 10
-        shape.moveTo( x, y - radius ),
-        shape.lineTo( x, y - height1 + radius );
-        shape.quadraticCurveTo( x, y - height1 , x + radius, y - height1 );
-        shape.lineTo( x + width - radius, y - height1 );
-        shape.quadraticCurveTo( x + width ,y - height1, x + width, y - height1 + radius );
-         shape.lineTo( x + width  , y - radius );
-      }
-
-      setTopShape(squareTopHalf)
-      setBotShape(squareBotHalf)
-
-      const squareTopHalfGeometry = new THREE.ShapeGeometry( squareTopHalf );
-      const squareBotHalfGeometry = new THREE.ShapeGeometry( squareBotHalf );
-
-
+      // const helper = new THREE.DirectionalLightHelper( directionalLight, 5 );
+      // scene.add( helper );
 
       //Texture Loader
       const textureLoader = new THREE.TextureLoader()
       const textureTop = textureLoader.load(topoPattern.src)
       const textureBot = textureLoader.load(topoPattern.src)
+      const textureText = textureLoader.load(topoTextPattern.src)
       const textureBG = textureLoader.load( backgroundGradient.src)
-      const textureBG2 = textureLoader.load( backgroundGradient2.src)
 
+      //Text
+
+      // Load font and create text
+      const fontLoader = new FontLoader()
+
+      // fontLoader.load('Rodin Pro M Regular (1).json', function (font) {
+      //     const textGeometry = new TextGeometry('Hello!', {
+      //         font: font,
+      //         size: 5,
+      //         height: 0.1,
+      //         curveSegments: 10,
+      //         bevelEnabled: false,
+      //         bevelThickness: 0.01,
+      //         bevelSize: 0.01,
+      //         bevelSegments: 1
+      //     });
+      //     textGeometry.center()
+
+      //     const textMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+      //     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+
+      //     scene.add(textMesh);
+      //     textMesh.position.set(0, 25, 0);
+
+      // });
+
+
+      fontLoader.load(
+          "helvetiker_regular.typeface.json",
+          (font) => 
+          { 
+            console.log(font)
+              const textGeometry = new TextGeometry(
+                  "FRONT END DEVELOPER", 
+                  {
+                      font: font,
+                      size: 6,
+                      depth: 1
+                  
+                  }
+              )
+              textGeometry.computeBoundingBox()
+              // textGeometry.translate(
+              //     - (textGeometry.boundingBox.max.x - 0.02) * 0.5,
+              //     - (textGeometry.boundingBox.max.y - 0.02) * 0.5,
+              //     - textGeometry.boundingBox.max.z * 0.5,
+              // )
+
+              // scale x2 horizontal
+              textureText.repeat.set(0.65, 1);
+            // scale x2 vertical
+            textureText.repeat.set(1, 0.2);
+            // scale x2 proportional
+            textureText.repeat.set(0.03, 0.03);
+            textureText.offset.set(0.25,0.4)
+            textureText.wrapS = THREE.RepeatWrapping;
+            textureText.wrapT = THREE.RepeatWrapping;
+              const material = new THREE.MeshBasicMaterial({map: textureText, transparent: true })
+              const text = new THREE.Mesh(textGeometry, material )
+              // scene.add(text)
+
+            }
+          )
+
+
+      /* Topo Square start */
+
+      let clippingConstant = -8;
+
+      const clipPlanes = [
+				new THREE.Plane( new THREE.Vector3( 0 ,-Math.PI, 0 ), clippingConstant )
+			];
+
+      //Set Shape
+      const squareTopHalf = new THREE.Shape();
+      const squareBotHalf = new THREE.Shape();
+      
+      interface ShapeObject {
+        moveTo(x: number, y: number): void;
+        lineTo(x: number, y: number): void;
+        quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
+      }
+
+      // Define Topographic Square Size
+      let topoSquareDimensions =  {
+        x: 1, 
+        y: 1,
+        width:50,
+        height: 27,
+        radius: 3
+      }
+
+      function setTopHalfTopoSquare(shape: ShapeObject) {
+        let { x, y, width, height, radius } = topoSquareDimensions
+
+          shape.moveTo( x, y + radius ),
+          shape.lineTo( x, y + height - radius );
+          shape.quadraticCurveTo( x, y + height, x + radius, y + height );
+          shape.lineTo( x + width - radius, y + height );
+          shape.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+          shape.lineTo( x + width , y + radius );
+      }
+
+      function setBotHalfTopoSquare(shape: ShapeObject) {
+        let { x, y, width, height, radius } = topoSquareDimensions
+
+        shape.moveTo( x, y - radius ),
+        shape.lineTo( x, y - height + radius );
+        shape.quadraticCurveTo( x, y - height , x + radius, y - height );
+        shape.lineTo( x + width - radius, y - height );
+        shape.quadraticCurveTo( x + width ,y - height, x + width, y - height + radius );
+         shape.lineTo( x + width  , y - radius );
+      }
+
+      setTopHalfTopoSquare(squareTopHalf)
+      setBotHalfTopoSquare(squareBotHalf)
+
+      const topoSquareTopHalfGeometry = new THREE.ShapeGeometry( squareTopHalf );
+      const topoSquareBottomHalfGeometry = new THREE.ShapeGeometry( squareBotHalf );
+
+      let topoSquareTopPosition = {
+        x: -25,
+        y: -3.5,
+        z: -50
+      }
+
+      let topoSquareBotPosition = {
+        x: -25,
+        y: 2.5,
+        z: -50
+      }
+
+      //Topographic Square Border
+      const meshLineMaterial = new MeshLineMaterial({useMap: true, map: textureBG})
+
+      const meshLineGeometryTop = new MeshLineGeometry()
+      meshLineGeometryTop.setPoints(topoSquareTopHalfGeometry,(p) => .5)
+      const meshLineTop = new THREE.Mesh(meshLineGeometryTop, meshLineMaterial)
+      meshLineTop.position.x = topoSquareTopPosition.x
+      meshLineTop.position.y = topoSquareTopPosition.y
+      meshLineTop.position.z = topoSquareTopPosition.z
+      scene.add(meshLineTop)
+      console.log(meshLineTop.position)
+
+      console.log(topoSquareTopPosition)
+
+      const meshLineGeometryBot = new MeshLineGeometry()
+      meshLineGeometryBot.setPoints(topoSquareBottomHalfGeometry,(p) => .5)
+      const meshLineBot = new THREE.Mesh(meshLineGeometryBot, meshLineMaterial)
+      meshLineBot.position.z = topoSquareBotPosition.z
+      meshLineBot.position.x = topoSquareBotPosition.x
+      meshLineBot.position.y = topoSquareBotPosition.y
+
+      scene.add(meshLineBot)
+
+
+       /* Topo Square end */
       
       textureTop.anisotropy =  16;
       textureBot.anisotropy =  16;
+      textureText.anisotropy =  16;
       textureBG.anisotropy =  16;
 
       setTimeout( function() {
 		
         textureTop.needsUpdate = true;
         textureBot.needsUpdate = true;
-
+        textureText.needsUpdate = true;
         textureBG.needsUpdate = true;
 
       }, 1000 );
@@ -150,7 +275,7 @@ export default function Home() {
 
       textureTop.colorSpace = THREE.SRGBColorSpace
       textureBot.colorSpace = THREE.SRGBColorSpace
-
+      textureText.colorSpace = THREE.SRGBColorSpace
       textureBG.colorSpace = THREE.SRGBColorSpace
 
       let points = new Float32Array([ 1, 0, 0 ])
@@ -163,66 +288,37 @@ export default function Home() {
 
       const curvePoints = curve.getPoints( 50 );
 
-      const geometry1 = new LineGeometry()
-      geometry1.setPositions(points)
       var uniforms = {
           lineTexture: { value: textureBG }
       };
 
 
-      var shaderMaterial = new THREE.RawShaderMaterial( {
-
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
-        linewidth: 0.4
-      } );
 
       // var shaderMaterial1 = new LineMaterial({
       //   color: "0xffffff",
       //   linewidth: 0.1
       // } );
 			
-      let line = new Line2( geometry1, shaderMaterial );
-      line.scale.set( 1, 1, 1 );
-      line.computeLineDistances()
 
-      scene.add(line)
-
-      line.position.z = -50;
-      line.position.x = -25;
-      line.position.y = 12;
+      const squareTopMat = new THREE.MeshBasicMaterial( {map: textureTop, transparent: true, clippingPlanes: clipPlanes, clipIntersection: true     } );
+      const squareBotMat = new THREE.MeshBasicMaterial( {map: textureBot, transparent: true, clippingPlanes: clipPlanes, clipIntersection: true     } );
 
 
-
-      const squareTopMat = new THREE.MeshBasicMaterial( {map: textureTop, transparent: true } );
-      const squareBotMat = new THREE.MeshBasicMaterial( {map: textureBot, transparent: true } );
-
-
-      const squareTopHalfMesh = new THREE.Mesh( squareTopHalfGeometry, squareTopMat ) ;
-      const squareBotHalfMesh = new THREE.Mesh( squareBotHalfGeometry, squareBotMat) ;
-
-      const squareTopHalfEdges = new THREE.EdgesGeometry( squareTopHalfGeometry ); 
-      const squareBotHalfEdges = new THREE.EdgesGeometry( squareBotHalfGeometry ); 
-      const squareEdgesMaterial = new THREE.LineBasicMaterial( { map: textureBG } );
+      const squareTopMatFaded = new THREE.MeshBasicMaterial( {map: textureTop, transparent: true, opacity: 0.5    } );
+      const squareBotMatFaded = new THREE.MeshBasicMaterial( {map: textureBot, transparent: true, opacity: 0.5     } );
 
 
-      const squareTopHalfLine = new THREE.LineSegments(squareTopHalfEdges, squareEdgesMaterial ); 
-      const squareBotHalfLine = new THREE.LineSegments(squareBotHalfEdges, squareEdgesMaterial ); 
+      const squareTopHalfMesh = new THREE.Mesh( topoSquareTopHalfGeometry, squareTopMat ) ;
+      const squareBotHalfMesh = new THREE.Mesh( topoSquareBottomHalfGeometry, squareBotMat) ;
+      scene.add( squareTopHalfMesh );
+      scene.add( squareBotHalfMesh );
 
-      scene.add( squareTopHalfLine );
-      scene.add( squareBotHalfLine );
+      const squareTopHalfMeshFaded = new THREE.Mesh( topoSquareTopHalfGeometry, squareTopMatFaded ) ;
+      const squareBotHalfMeshFaded = new THREE.Mesh( topoSquareBottomHalfGeometry, squareBotMatFaded) ;
+      scene.add( squareTopHalfMeshFaded );
+      scene.add( squareBotHalfMeshFaded );
 
-
-      squareTopHalfLine.position.z = -50;
-      squareTopHalfLine.position.x = -25;
-      squareTopHalfLine.position.y = -10;
-
-
-      squareBotHalfLine.position.z = -50;
-      squareBotHalfLine.position.x = -25;
-      squareBotHalfLine.position.y = 10;
-
-      let pos = squareTopHalfGeometry.attributes.position;
+      let pos = topoSquareTopHalfGeometry.attributes.position;
       let b3 = new THREE.Box3().setFromBufferAttribute(pos);
       let b3size = new THREE.Vector3();
       b3.getSize(b3size);
@@ -234,61 +330,142 @@ export default function Home() {
         let v = (y - b3.min.y) / b3size.y;
         uv.push(u, v);
       }
-      squareTopHalfGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-      squareBotHalfGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      topoSquareTopHalfGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+      topoSquareBottomHalfGeometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
 
     
-      squareTopHalfMesh.position.z = -50;
-      squareTopHalfMesh.position.x = -25;
-      squareTopHalfMesh.position.y = -10;
+      squareTopHalfMesh.position.x = topoSquareTopPosition.x;
+      squareTopHalfMesh.position.y = topoSquareTopPosition.y;
+      squareTopHalfMesh.position.z = topoSquareTopPosition.z;
+      squareTopHalfMeshFaded.position.x = topoSquareTopPosition.x;
+      squareTopHalfMeshFaded.position.y = topoSquareTopPosition.y;
+      squareTopHalfMeshFaded.position.z = topoSquareTopPosition.z;
 
-      squareBotHalfMesh.position.z = -50;
-      squareBotHalfMesh.position.x = -25;
-      squareBotHalfMesh.position.y = 10;
 
+      squareBotHalfMesh.position.x = topoSquareBotPosition.x;
+      squareBotHalfMesh.position.y = topoSquareBotPosition.y;
+      squareBotHalfMesh.position.z = topoSquareBotPosition.z;
+      squareBotHalfMeshFaded.position.x = topoSquareBotPosition.x;
+      squareBotHalfMeshFaded.position.y = topoSquareBotPosition.y;
+      squareBotHalfMeshFaded.position.z = topoSquareBotPosition.z;
 
-      scene.add( squareTopHalfMesh );
-      scene.add( squareBotHalfMesh );
 
       // Create shape logo
       const shapeLogotexture = new THREE.TextureLoader().load( "/newtop.png" );
  
+      const squareLogo = new THREE.Shape();
+      const circleLogo = new THREE.Shape();
+      const triangleLogo = new THREE.Shape();
+
+      let squareLogoDimensions = {
+        x: 1, 
+        y: 1,
+        width:3.5,
+        height: 3.5,
+        radius: 1.2
+      }
+
+
+      function setSquareLogo(shape: ShapeObject) {
+        const { x, y, width, height, radius } = squareLogoDimensions;
+        shape.moveTo(x + radius, y);
+        shape.lineTo(x + width - radius, y);
+        shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+        shape.lineTo(x + width, y + height - radius);
+        shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        shape.lineTo(x + radius, y + height);
+        shape.quadraticCurveTo(x, y + height, x, y + height - radius);
+        shape.lineTo(x, y + radius);
+        shape.quadraticCurveTo(x, y, x + radius, y);
+        shape.lineTo(x + width - radius , y );
+
+    }
+
+
+    let circleLogoDimensions = {
+      x: 2.75, // Center x-coordinate
+      y: 2.75, // Center y-coordinate
+      radius: 2 // Radius of the circle
+    };
+    
+    function setCircleLogo(shape) {
+      const { x, y, radius } = circleLogoDimensions;
+    
+      shape.moveTo(x + radius, y);
+      shape.arc(x, y, radius, 0, Math.PI * 2);
+    }
+
+    let triangleDimensions = {
+      x1: 0.6, y1: .7, // First vertex
+      x2: 5.3, y2: .7, // Second vertex
+      x3: 3, y3: 4.8, // Third vertex
+      radius: 2 // Radius for rounded corners
+    };
+    
+    function setTriangleLogo(shape) {
+      const { x1, y1, x2, y2, x3, y3, radius } = triangleDimensions;
+    
+      // Move to the starting point, offset by the radius
+      shape.moveTo(x1 + radius, y1);
+    
+      // Draw the first edge with a rounded corner
+      shape.lineTo(x2 - radius, y2);
+      shape.quadraticCurveTo(x2, y2, x2 - radius * Math.cos(Math.PI / 3), y2 + radius * Math.sin(Math.PI / 3));
+    
+      // Draw the second edge with a rounded corner
+      shape.lineTo(x3 + radius * Math.cos(Math.PI / 3), y3 - radius * Math.sin(Math.PI / 3));
+      shape.quadraticCurveTo(x3, y3, x3 - radius * Math.cos(Math.PI / 3), y3 - radius * Math.sin(Math.PI / 3));
+    
+      // Draw the third edge with a rounded corner
+      shape.lineTo(x1 + radius * Math.cos(Math.PI / 3), y1 + radius * Math.sin(Math.PI / 3));
+      shape.quadraticCurveTo(x1, y1, x1 + radius, y1);
+
+      shape.lineTo(x1 + x2 - radius - x1, y1);
+
+    }
+    
+
+    setCircleLogo(circleLogo)
+    setSquareLogo(squareLogo)
+    setTriangleLogo(triangleLogo)
+
+    const squareLogoGeometry = new THREE.ShapeGeometry( squareLogo );
+    const circleLogoGeometry = new THREE.ShapeGeometry( circleLogo );
+    const triangleLogoGeometry = new THREE.ShapeGeometry( triangleLogo );
+
+    //Topographic Square Border
+    const logoMaterial = new MeshLineMaterial({useMap: true, map: textureBG})
+
+    const squareLogoMeshLineGeometry = new MeshLineGeometry()
+    squareLogoMeshLineGeometry .setPoints(squareLogoGeometry,(p) => .2)
+    const circleLogoMeshLineGeometry = new MeshLineGeometry()
+    circleLogoMeshLineGeometry .setPoints(circleLogoGeometry,(p) => .2)
+    const triangleLogoMeshLineGeometry = new MeshLineGeometry()
+    triangleLogoMeshLineGeometry .setPoints(triangleLogoGeometry,(p) => .2)
+
+    const squareLogoMesh = new THREE.Mesh(squareLogoMeshLineGeometry, logoMaterial)
+    const circleLogoMesh = new THREE.Mesh(circleLogoMeshLineGeometry, logoMaterial)
+    const triangleLogoMesh = new THREE.Mesh(triangleLogoMeshLineGeometry, logoMaterial)
+
+
+    squareLogoMesh.position.set (-8, -3, 0)
+
+    circleLogoMesh.position.set (0, -5.5, 0)
+    triangleLogoMesh.position.set (-2, -2.5, 0)
+
+    
+    // scene.add(circleLogoMesh)
+    // scene.add(squareLogoMesh)
+    // scene.add(triangleLogoMesh)
+
+
+
+
       const shapeLogoMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, side: THREE.DoubleSide, map:shapeLogotexture   } );
 
 
 
-      const shapeLogoGeometry = new THREE.RingGeometry(1.2, 1, 60 ); 
-      const shapeLogoMesh = new THREE.Mesh( shapeLogoGeometry, shapeLogoMaterial ); 
-      shapeLogoMesh.position.z = -1;
-      root.add(shapeLogoMesh)
-
-      function addShape(shape, color, x, y, z, rx, ry, rz, s) {
-        addLineShape(shape, color, x, y, z, rx, ry, rz, s);
-      }
-
-      function addLineShape(shape, color, x, y, z, rx, ry, rz, s) {
-        // lines
-    
-        shape.autoClose = true;
-    
-        var points = shape.getPoints();
-        var spacedPoints = shape.getSpacedPoints(50);
-    
-        var geometryPoints = new THREE.BufferGeometry().setFromPoints(points);
-     
-    
-        // solid line
-        var line = new THREE.Line(
-          geometryPoints,
-          new THREE.LineBasicMaterial({ color: color, map: shapeLogotexture, linewidth:50})
-        );
-        line.position.set(0,0,0,0);
-        line.rotation.set(rx, ry, rz);
-        line.scale.set(s, s, s);
-        root.add(line)
-    
-      }
-
+      
         // Rounded rectangle
 
   var roundedRectShape = new THREE.Shape();
@@ -335,12 +512,15 @@ export default function Home() {
 
       geometry.center();
       geometry.rotateX(Math.PI * -.5);
+
+      let defaultRingYIndex = 100
+      let ring: THREE.Mesh;
       ring = new THREE.Mesh(geometry, material);
       ring.position.z = -50
-      ring.position.y = 0
+      ring.position.y = defaultRingYIndex
       ring.castShadow = true;
       ring.receiveShadow = false;
-      // root.add(ring)
+      root.add(ring)
 
       // Add root group to the scene
       scene.add(root)
@@ -360,21 +540,74 @@ export default function Home() {
       renderer.domElement.style.top = 0;
       renderer.domElement.style.zIndex = 1;
       renderer.setSize(innerWidth, innerHeight);
-      
+      // Enable sRGB encoding for the renderer output
+
+        // Enable ACES tone mapping
       CSSRenderer.domElement.appendChild(renderer.domElement);
       
 
-      const controls = new OrbitControls( camera, renderer.domElement );
+      // const controls = new OrbitControls( camera, renderer.domElement );
 
       //controls.update() must be called after any manual changes to the camera's transform
       camera.position.set( 0, 0, 100)
-      controls.update();
+      // controls.update();
       renderer.outputColorSpace = THREE.SRGBColorSpace; // optional with post-processing
+      renderer.localClippingEnabled = true;
+
+      /* Scroll */
+      let scrollY = window.scrollY
+
+      window.addEventListener('scroll', () => {
+        scrollY = window.scrollY
+      })
+
+
+      /* Animations */
+
+      const clock = new THREE.Clock()
+      
+      // Function to animate the clipping plane constant
+      // function loadingAnimation() {
+
+      //   const elapsedTime = clock.getElapsedTime()
+
+      //   clippingConstant +=  0.01; // Adjust this value for different speeds
+      //   if (clippingConstant > 8) { clippingConstant = -10; }// Reset to keep it within a range
+ 
+      //   // Update the clipping planes
+      //   if( clippingConstant > -7 ) {
+      //   clipPlanes[0].constant = clippingConstant;
+      //   }
+      // }
+
+      
+      // function animateRing() {
+      //   if (clippingConstant > 2 && defaultRingYIndex > 0) {
+      //     ring.position.y -= .2; 
+      //     defaultRingYIndex -= .2; 
+      //   }
+      // }
+
+
+      const tick = () => {
+        const elapsedTime = clock.getElapsedTime()
+        console.log(elapsedTime)
+        if(elapsedTime > 5 && ring.position.y > 0 ) {
+
+        }
+      }
+
 
       function render() {
-        requestAnimationFrame(render);
-        CSSRenderer.render( scene, camera );
         renderer.render(scene, camera);
+        CSSRenderer.render( scene, camera );
+
+        requestAnimationFrame(render);
+        // Animate the clipping plane constant
+        
+        window.requestAnimationFrame(tick)
+       
+        CSSRenderer.render( scene, camera );
   
       }
 
@@ -392,8 +625,11 @@ export default function Home() {
 });
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24 ">
+             <h1>hello</h1>
+          
        <div  className="rounded-lg">
         <div id="css"></div>
+
           <div className="loading-pattern rounded-lg">
   
           </div>
