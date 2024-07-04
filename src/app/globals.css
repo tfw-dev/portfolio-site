@@ -22,7 +22,7 @@ body {
 }
 
 .pattern-border {
-  background-image: url('../../public/newtop2.svg');
+  /* background-image: url('../../public/newtop2.svg'); */
   position: relative;
   background-size: contain;
   border-radius: 1px;
@@ -43,7 +43,7 @@ body {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image: url('../../public/newtop.svg');
+  /* background-image: url('../../public/newtop.svg'); */
   background-repeat: no-repeat;
   background-position: 50% 0;
   background-size: cover;
@@ -60,7 +60,7 @@ body {
   height: 100%;
   background-image: url('../../public/main-icons.png');
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: cover;
 }
 
 .faded-pattern:before {
@@ -70,7 +70,23 @@ body {
 .loading-pattern:before {}
 
 
+
+
 canvas {
   position: absolute;
   top: 0;
 }
+
+@font-face {
+  font-family: 'fot-rodin_prol';
+  src: url('../../public/FOT-Rodin\ Pro\ L.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+h1 {
+  color:white;
+  font-size: 30px;
+  font-family: fot-rodin_prol;
+}
+
