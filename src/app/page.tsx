@@ -8,17 +8,39 @@ import{ FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import{ TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { MeshLineGeometry, MeshLineMaterial, raycast } from 'meshline'
 import { gsap } from "gsap";
+import { GUI } from 'dat.gui'
+
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+/* The following plugin is a Club GSAP perk */
+import { ScrollSmoother } from "gsap/ScrollSmoother";
+import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
+import {Text} from 'troika-three-text'
 
 
+import scrollingIndicator from "../../public/Arrow down.png"
+import RodinPro from "../../public/FOT-RodinProL2.otf"
 
 // Textures
 import topoPattern from '../../public/topographic-pattern.png'
+console.log(topoPattern)
 import topoTextPattern from '../../public/topographic Pattern Text.png'
 import backgroundGradient from '../../public/newtop.png'
-
+import { text } from 'node:stream/consumers';
 
 export default function Home() {
   useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger, ScrollSmoother,ScrambleTextPlugin);
+
+
+    // create the scrollSmoother before your scrollTriggers
+    ScrollSmoother.create({
+      smooth: 2, // how long (in seconds) it takes to "catch up" to the native scroll position
+      effects: true, // looks for data-speed and data-lag attributes on elements
+      smoothTouch: 0.1, // much shorter smoothing time on touch devices (default is NO smoothing on touch devices)
+    });
+
+
     // Three.js Variables
 
     let 
@@ -82,35 +104,28 @@ export default function Home() {
 
       // Load font and create text
       const fontLoader = new FontLoader()
+     
 
-      // fontLoader.load('Rodin Pro M Regular (1).json', function (font) {
-      //     const textGeometry = new TextGeometry('Hello!', {
-      //         font: font,
-      //         size: 5,
-      //         height: 0.1,
-      //         curveSegments: 10,
-      //         bevelEnabled: false,
-      //         bevelThickness: 0.01,
-      //         bevelSize: 0.01,
-      //         bevelSegments: 1
-      //     });
-      //     textGeometry.center()
+  // Create:
+const myText = new Text()
+root.add(myText)
 
-      //     const textMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
-      //     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+// Set properties to configure:
+myText.text = 'Loading...'
+myText.fontSize = 2
+myText.color = 0xffffff;
+
+myText.position.set(-20,-25,-50)
 
 
-      //     scene.add(textMesh);
-      //     textMesh.position.set(0, 25, 0);
+// Update the rendering:
+myText.sync()
 
-      // });
-
-
+   let textMarquee;
       fontLoader.load(
           "helvetiker_regular.typeface.json",
           (font) => 
           { 
-            console.log(font)
               const textGeometry = new TextGeometry(
                   "FRONT END DEVELOPER", 
                   {
@@ -137,14 +152,22 @@ export default function Home() {
             textureText.wrapS = THREE.RepeatWrapping;
             textureText.wrapT = THREE.RepeatWrapping;
               const material = new THREE.MeshBasicMaterial({map: textureText, transparent: true })
-              const text = new THREE.Mesh(textGeometry, material )
-              // scene.add(text)
+              textMarquee = new THREE.Mesh(textGeometry, material )
+              textMarquee.position.x = 150
+              textMarquee.position.z = -30
+              scene.add(textMarquee)
 
             }
           )
 
 
       /* Topo Square start */
+
+      let topoSquareTop = new THREE.Group
+      let topoSquareBottom = new THREE.Group
+
+      scene.add(topoSquareTop)
+      scene.add(topoSquareBottom)
 
       let clippingConstant = -8;
 
@@ -220,10 +243,7 @@ export default function Home() {
       meshLineTop.position.x = topoSquareTopPosition.x
       meshLineTop.position.y = topoSquareTopPosition.y
       meshLineTop.position.z = topoSquareTopPosition.z
-      scene.add(meshLineTop)
-      console.log(meshLineTop.position)
-
-      console.log(topoSquareTopPosition)
+      topoSquareTop.add(meshLineTop)
 
       const meshLineGeometryBot = new MeshLineGeometry()
       meshLineGeometryBot.setPoints(topoSquareBottomHalfGeometry,(p) => .5)
@@ -232,8 +252,22 @@ export default function Home() {
       meshLineBot.position.x = topoSquareBotPosition.x
       meshLineBot.position.y = topoSquareBotPosition.y
 
-      scene.add(meshLineBot)
+      topoSquareBottom.add(meshLineBot)
 
+      const loadingAnimationLineGeometry = new THREE.CapsuleGeometry( .1, 4, 4, 8 ); 
+      const loadingAnimationLineMaterial = new THREE.MeshBasicMaterial( {map: textureBG , opacity: 0, transparent: true } ); 
+      const loadingAnimationLine1 = new THREE.Mesh( loadingAnimationLineGeometry, loadingAnimationLineMaterial );
+      const loadingAnimationLine2 = new THREE.Mesh( loadingAnimationLineGeometry, loadingAnimationLineMaterial );
+
+      loadingAnimationLine1.position.set(-27,28, -50)
+      loadingAnimationLine1.rotation.z = Math.PI / 4
+      
+      loadingAnimationLine2.position.set(29,-26, -50)
+      loadingAnimationLine2.rotation.z = Math.PI / 4
+      
+
+      scene.add(loadingAnimationLine1 )
+      scene.add(loadingAnimationLine2)
 
        /* Topo Square end */
       
@@ -310,13 +344,13 @@ export default function Home() {
 
       const squareTopHalfMesh = new THREE.Mesh( topoSquareTopHalfGeometry, squareTopMat ) ;
       const squareBotHalfMesh = new THREE.Mesh( topoSquareBottomHalfGeometry, squareBotMat) ;
-      scene.add( squareTopHalfMesh );
-      scene.add( squareBotHalfMesh );
+      topoSquareTop.add( squareTopHalfMesh );
+      topoSquareBottom.add( squareBotHalfMesh );
 
       const squareTopHalfMeshFaded = new THREE.Mesh( topoSquareTopHalfGeometry, squareTopMatFaded ) ;
       const squareBotHalfMeshFaded = new THREE.Mesh( topoSquareBottomHalfGeometry, squareBotMatFaded) ;
-      scene.add( squareTopHalfMeshFaded );
-      scene.add( squareBotHalfMeshFaded );
+      topoSquareTop.add( squareTopHalfMeshFaded );
+      topoSquareBottom.add( squareBotHalfMeshFaded );
 
       let pos = topoSquareTopHalfGeometry.attributes.position;
       let b3 = new THREE.Box3().setFromBufferAttribute(pos);
@@ -349,6 +383,8 @@ export default function Home() {
       squareBotHalfMeshFaded.position.y = topoSquareBotPosition.y;
       squareBotHalfMeshFaded.position.z = topoSquareBotPosition.z;
 
+      const ring = new THREE.Group();
+
 
       // Create shape logo
       const shapeLogotexture = new THREE.TextureLoader().load( "/newtop.png" );
@@ -358,10 +394,10 @@ export default function Home() {
       const triangleLogo = new THREE.Shape();
 
       let squareLogoDimensions = {
-        x: 1, 
-        y: 1,
-        width:3.5,
-        height: 3.5,
+        x: 2, 
+        y: 0,
+        width:4,
+        height: 4,
         radius: 1.2
       }
 
@@ -383,9 +419,9 @@ export default function Home() {
 
 
     let circleLogoDimensions = {
-      x: 2.75, // Center x-coordinate
-      y: 2.75, // Center y-coordinate
-      radius: 2 // Radius of the circle
+      x:1, // Center x-coordinate
+      y: 1, // Center y-coordinate
+      radius: 2// Radius of the circle
     };
     
     function setCircleLogo(shape) {
@@ -396,10 +432,10 @@ export default function Home() {
     }
 
     let triangleDimensions = {
-      x1: 0.6, y1: .7, // First vertex
-      x2: 5.3, y2: .7, // Second vertex
-      x3: 3, y3: 4.8, // Third vertex
-      radius: 2 // Radius for rounded corners
+      x1: 1, y1: .12, // First vertex
+      x2: 5.2, y2: .1, // Second vertex
+      x3: 3.2, y3: 4.1, // Third vertex
+      radius: 1.2// Radius for rounded corners
     };
     
     function setTriangleLogo(shape) {
@@ -434,30 +470,48 @@ export default function Home() {
     const triangleLogoGeometry = new THREE.ShapeGeometry( triangleLogo );
 
     //Topographic Square Border
-    const logoMaterial = new MeshLineMaterial({useMap: true, map: textureBG})
+    const logoMaterial = new MeshLineMaterial({useMap: true, map: textureBG, lineWidth: 1 })
 
     const squareLogoMeshLineGeometry = new MeshLineGeometry()
-    squareLogoMeshLineGeometry .setPoints(squareLogoGeometry,(p) => .2)
+    squareLogoMeshLineGeometry .setPoints(squareLogoGeometry,(p) => .6)
     const circleLogoMeshLineGeometry = new MeshLineGeometry()
-    circleLogoMeshLineGeometry .setPoints(circleLogoGeometry,(p) => .2)
+    circleLogoMeshLineGeometry .setPoints(circleLogoGeometry,(p) => .6)
     const triangleLogoMeshLineGeometry = new MeshLineGeometry()
-    triangleLogoMeshLineGeometry .setPoints(triangleLogoGeometry,(p) => .2)
+    triangleLogoMeshLineGeometry .setPoints(triangleLogoGeometry,(p) => .6)
 
-    const squareLogoMesh = new THREE.Mesh(squareLogoMeshLineGeometry, logoMaterial)
-    const circleLogoMesh = new THREE.Mesh(circleLogoMeshLineGeometry, logoMaterial)
-    const triangleLogoMesh = new THREE.Mesh(triangleLogoMeshLineGeometry, logoMaterial)
+// Helper function to create a mesh and set its position
+function createMesh(geometry, material, position, rotation) {
+  const mesh = new THREE.Mesh(geometry, material);
+  if (position) {
+      mesh.position.set(position.x || 0, position.y || 0, position.z || 0);
+      mesh.rotation.set(0,rotation.y || 0,0)
+  }
+  return mesh;
+}
+
+// Create the logo meshes
+const logoShapes = new THREE.Group();
+
+const squareLogoMesh = createMesh(squareLogoMeshLineGeometry, logoMaterial, { x: -8.5, y: -2,z: 35},{y: -0.1});
+const triangleLogoMesh = createMesh(triangleLogoMeshLineGeometry, logoMaterial, { x: -1.5, y: -2,z: 35.5 }, {y: 0});
+const circleLogoMesh = createMesh(circleLogoMeshLineGeometry, logoMaterial, { x: 4, y: -2, z: 35}, {y: 0.15});
+
+// Add the meshes to the scene (or any parent group)
+logoShapes.add(squareLogoMesh);;
+logoShapes.add(circleLogoMesh);
+logoShapes.add(triangleLogoMesh);
 
 
-    squareLogoMesh.position.set (-8, -3, 0)
+ring.add(logoShapes)
 
-    circleLogoMesh.position.set (0, -5.5, 0)
-    triangleLogoMesh.position.set (-2, -2.5, 0)
+    // const box = new THREE.BoxHelper( circleLogoMesh, 0xffffff );
+    // const box2 = new THREE.BoxHelper( squareLogoMesh, 0xffffff );
+    // const box3 = new THREE.BoxHelper( triangleLogoMesh, 0xffffff );
+
+    // scene.add(box,box2, box3)
+
 
     
-    // scene.add(circleLogoMesh)
-    // scene.add(squareLogoMesh)
-    // scene.add(triangleLogoMesh)
-
 
 
 
@@ -485,7 +539,7 @@ export default function Home() {
   })(roundedRectShape, 0, 0, 5, 5, 2);
 
 
-      // Create Ring
+      // Create ringBand
       var material = new THREE.MeshLambertMaterial({
         color: 0x181818,
         side: THREE.DoubleSide,
@@ -513,22 +567,24 @@ export default function Home() {
       geometry.center();
       geometry.rotateX(Math.PI * -.5);
 
-      let defaultRingYIndex = 100
-      let ring: THREE.Mesh;
-      ring = new THREE.Mesh(geometry, material);
-      ring.position.z = -50
-      ring.position.y = defaultRingYIndex
-      ring.castShadow = true;
-      ring.receiveShadow = false;
-      root.add(ring)
+
+      let ringBand: THREE.Mesh;
+      ringBand = new THREE.Mesh(geometry, material);
+      ringBand.position.set(0, 0, 0);  // Move the group 2 units along the x-axis
+      ring.position.set(0,-100,-50)
+      ringBand.castShadow = true;
+      ringBand.receiveShadow = false;
+      ring.add(ringBand)
 
       // Add root group to the scene
+      scene.add(ring)
       scene.add(root)
 
+      
       // Setup Renderers
       CSSRenderer = new CSS3DRenderer();
       CSSRenderer.setSize(innerWidth, innerHeight);
-      document.querySelector('#css').appendChild(CSSRenderer.domElement);
+      document.querySelector('#canvas').appendChild(CSSRenderer.domElement);
       
       // Put the mainRenderer on top
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true,  preserveDrawingBuffer: true
@@ -542,27 +598,89 @@ export default function Home() {
       renderer.setSize(innerWidth, innerHeight);
       // Enable sRGB encoding for the renderer output
 
-        // Enable ACES tone mapping
       CSSRenderer.domElement.appendChild(renderer.domElement);
       
 
       // const controls = new OrbitControls( camera, renderer.domElement );
 
       //controls.update() must be called after any manual changes to the camera's transform
-      camera.position.set( 0, 0, 100)
+      camera.position.set( 0, 0, 150)
       // controls.update();
       renderer.outputColorSpace = THREE.SRGBColorSpace; // optional with post-processing
       renderer.localClippingEnabled = true;
 
-      /* Scroll */
-      let scrollY = window.scrollY
-
-      window.addEventListener('scroll', () => {
-        scrollY = window.scrollY
-      })
+   
 
 
+        
+      
+  //   startScrollAnimations()
       /* Animations */
+      const allowScroll = () => {
+        gsap.timeline({
+          scrollTrigger: {
+            trigger: "#canvas",
+            start: "top top",
+            pin: true,
+            end: "+=" + window.innerHeight * 3,
+            scrub: 0.5,
+  
+          },
+          onComplete: animate
+        })
+        .to(ring.position, {y: 0})
+        .to(topoSquareTop.position, {y: 50})
+        .to(topoSquareBottom.position, {y: -50}, "<")
+        .to(ring.rotation, {y: .2, z: 1, x: .35}, ">")
+        .to(ring.position, {y: -10}, "<")
+        .to(textMarquee.position , {x: -150}, ">")
+
+
+
+      }
+
+      
+      ScrollTrigger.create({
+        trigger: '#headline',
+        start: 'top top',
+        pin: true,
+        endTrigger: '#otherID',
+        end: 'bottom 50%+=100px',
+        markers: true
+    });
+
+        // Animation loop
+        function animate() {
+
+      
+
+          // Rotate the ring
+          ring.rotation.y += 0.01; // Adjust this value for different rotation speeds
+
+          renderer.render(scene, camera);
+          
+      }
+
+
+      var loadingAnimation = gsap.timeline({repeat: 0, repeatDelay: 0,  onComplete: allowScroll  });
+      loadingAnimation.to(myText, {duration: 6, delay: 4, text:"loading experience"} );
+      loadingAnimation.to(clipPlanes[0], {constant: -4, duration: 0, ease: "slow" }, "0");
+      loadingAnimation.to(loadingAnimationLineMaterial, {duration: 3, opacity: 1,ease: "slow" }, "<")
+      loadingAnimation.to(loadingAnimationLine1.position , {x: 29, duration: 1, ease: "slow"}, 1);
+      loadingAnimation.to(loadingAnimationLine1.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
+      loadingAnimation.to(loadingAnimationLine2.position , {x: -27, duration: 1, ease: "slow"}, 1);
+      loadingAnimation.to(loadingAnimationLine2.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
+      loadingAnimation.to(loadingAnimationLine1.position , {y: -26, duration: 1, ease: "slow"}, 3);
+      loadingAnimation.to(loadingAnimationLine1.rotation , {z: Math.PI / 4, duration: 1}, 3);
+      loadingAnimation.to(loadingAnimationLine2.position , {y: 28, duration: 2, ease: "slow"}, 3);
+      loadingAnimation.to(loadingAnimationLine2.rotation , {z: Math.PI / 4, duration: 1}, 3);
+      loadingAnimation.to(clipPlanes[0], {constant: 6, duration: 2 }, 2);
+      loadingAnimation.to(clipPlanes[0], {constant: 8, duration: 2 }, 4);
+      loadingAnimation.from("#headline", {duration: 2, opacity: 0 }, ">");
+      loadingAnimation.to("#headline", {duration: 4, scrambleText:{text:"loading experience", chars:".*.*9", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, "<" )
+      loadingAnimation.to("#headline", {duration: 2, scrambleText:{text:"I am Taylor Ward", chars:"11111111", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, ">" )
+      loadingAnimation.from("#scrollingIndicator", {duration: 2, opacity: 0 }, "<");
+
 
       const clock = new THREE.Clock()
       
@@ -571,7 +689,7 @@ export default function Home() {
 
       //   const elapsedTime = clock.getElapsedTime()
 
-      //   clippingConstant +=  0.01; // Adjust this value for different speeds
+      //   clippingConstnpmant +=  0.01; // Adjust this value for different speeds
       //   if (clippingConstant > 8) { clippingConstant = -10; }// Reset to keep it within a range
  
       //   // Update the clipping planes
@@ -581,21 +699,21 @@ export default function Home() {
       // }
 
       
-      // function animateRing() {
-      //   if (clippingConstant > 2 && defaultRingYIndex > 0) {
-      //     ring.position.y -= .2; 
-      //     defaultRingYIndex -= .2; 
+      // function animateringBand() {
+      //   if (clippingConstant > 2 && defaultringBandYIndex > 0) {
+      //     ringBand.position.y -= .2; 
+      //     defaultringBandYIndex -= .2; 
       //   }
       // }
 
 
-      const tick = () => {
-        const elapsedTime = clock.getElapsedTime()
-        console.log(elapsedTime)
-        if(elapsedTime > 5 && ring.position.y > 0 ) {
+      // const tick = () => {
+      //   const elapsedTime = clock.getElapsedTime()
+      //   console.log(elapsedTime)
+      //   if(elapsedTime > 5 && ringBand.position.y > 0 ) {
 
-        }
-      }
+      //   }
+      // }
 
 
       function render() {
@@ -605,7 +723,7 @@ export default function Home() {
         requestAnimationFrame(render);
         // Animate the clipping plane constant
         
-        window.requestAnimationFrame(tick)
+        // window.requestAnimationFrame(tick)
        
         CSSRenderer.render( scene, camera );
   
@@ -622,18 +740,24 @@ export default function Home() {
 
 
     init()
+
+    
 });
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24 ">
-             <h1>hello</h1>
-          
-       <div  className="rounded-lg">
-        <div id="css"></div>
+    <div id="smooth-wrapper">
+      <div id="smooth-content">
+      <main className="flex min-h-screen flex-col items-center justify-between ">
+        <h1 id="headline"></h1>
+        <div  className="rounded-lg">
+          <div id="canvas"></div>
 
-          <div className="loading-pattern rounded-lg">
-  
-          </div>
-       </div>
-    </main>
+            <div className="loading-pattern rounded-lg">
+    
+            </div>
+            <img id="scrollingIndicator" src={scrollingIndicator.src}></img>
+        </div>
+      </main>
+      </div>
+    </div>
   )
 }

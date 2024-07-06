@@ -84,9 +84,26 @@ canvas {
   font-style: normal;
 }
 
-h1 {
-  color:white;
-  font-size: 30px;
-  font-family: fot-rodin_prol;
+main {
+  position: relative;
 }
 
+h1 {
+  color:white;
+  font-size: 12px;
+  font-family: fot-rodin_prol;
+  font-weight: 100;
+  -moz-osx-font-smoothing: grayscale;
+-webkit-font-smoothing: antialiased;
+  position: absolute;
+  top: 250px;
+  left: 50%;
+}
+
+#scrollingIndicator {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  top: 70vh
+}
