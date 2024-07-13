@@ -1,13 +1,13 @@
 "use client"; 
-import Image from 'next/image'
 import { useEffect } from 'react';
+import Image from 'next/image'
 import * as THREE from 'three';
 import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import{ FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import{ TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js'
 import { MeshLineGeometry, MeshLineMaterial, raycast } from 'meshline'
 import { gsap } from "gsap";
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'dat.gui'
 
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -57,7 +57,6 @@ export default function Home() {
       
 
       // create root object group
-      root = new THREE.Object3D()
 
       // Set Scene
       scene = new THREE.Scene();
@@ -74,7 +73,7 @@ export default function Home() {
       // Set light
       var ambientLight = new THREE.AmbientLight( 0xffffff,9);
       // scene.add( new THREE.PointLightHelper( light, 10 ) )
-      root.add( ambientLight );
+      scene.add( ambientLight );
 
       let directionalLight = new THREE.DirectionalLight('#ffffff', 10)
       directionalLight.position.set(1,-5, 10)
@@ -107,8 +106,23 @@ export default function Home() {
      
 
   // Create:
+
+
+  // Create a div element
+const element = document.createElement('p');
+element.id = "dynamicText"
+
+element.style.color = "#ffffff"
+
+// Create a CSS3DObject
+const cssObject = new CSS3DObject(element);
+cssObject.position.set(0, 20,  50);
+scene.add(cssObject);
+
+
+
 const myText = new Text()
-root.add(myText)
+scene.add(myText)
 
 // Set properties to configure:
 myText.text = 'Loading...'
@@ -571,14 +585,13 @@ ring.add(logoShapes)
       let ringBand: THREE.Mesh;
       ringBand = new THREE.Mesh(geometry, material);
       ringBand.position.set(0, 0, 0);  // Move the group 2 units along the x-axis
-      ring.position.set(0,-100,-50)
+      ring.position.set(0,100,-50)
       ringBand.castShadow = true;
       ringBand.receiveShadow = false;
       ring.add(ringBand)
 
       // Add root group to the scene
       scene.add(ring)
-      scene.add(root)
 
       
       // Setup Renderers
@@ -602,10 +615,10 @@ ring.add(logoShapes)
       
 
       // const controls = new OrbitControls( camera, renderer.domElement );
-
-      //controls.update() must be called after any manual changes to the camera's transform
-      camera.position.set( 0, 0, 150)
       // controls.update();
+
+      camera.position.set( 0, 0, 150)
+
       renderer.outputColorSpace = THREE.SRGBColorSpace; // optional with post-processing
       renderer.localClippingEnabled = true;
 
@@ -661,26 +674,7 @@ ring.add(logoShapes)
           
       }
 
-
-      var loadingAnimation = gsap.timeline({repeat: 0, repeatDelay: 0,  onComplete: allowScroll  });
-      loadingAnimation.to(myText, {duration: 6, delay: 4, text:"loading experience"} );
-      loadingAnimation.to(clipPlanes[0], {constant: -4, duration: 0, ease: "slow" }, "0");
-      loadingAnimation.to(loadingAnimationLineMaterial, {duration: 3, opacity: 1,ease: "slow" }, "<")
-      loadingAnimation.to(loadingAnimationLine1.position , {x: 29, duration: 1, ease: "slow"}, 1);
-      loadingAnimation.to(loadingAnimationLine1.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
-      loadingAnimation.to(loadingAnimationLine2.position , {x: -27, duration: 1, ease: "slow"}, 1);
-      loadingAnimation.to(loadingAnimationLine2.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
-      loadingAnimation.to(loadingAnimationLine1.position , {y: -26, duration: 1, ease: "slow"}, 3);
-      loadingAnimation.to(loadingAnimationLine1.rotation , {z: Math.PI / 4, duration: 1}, 3);
-      loadingAnimation.to(loadingAnimationLine2.position , {y: 28, duration: 2, ease: "slow"}, 3);
-      loadingAnimation.to(loadingAnimationLine2.rotation , {z: Math.PI / 4, duration: 1}, 3);
-      loadingAnimation.to(clipPlanes[0], {constant: 6, duration: 2 }, 2);
-      loadingAnimation.to(clipPlanes[0], {constant: 8, duration: 2 }, 4);
-      loadingAnimation.from("#headline", {duration: 2, opacity: 0 }, ">");
-      loadingAnimation.to("#headline", {duration: 4, scrambleText:{text:"loading experience", chars:".*.*9", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, "<" )
-      loadingAnimation.to("#headline", {duration: 2, scrambleText:{text:"I am Taylor Ward", chars:"11111111", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, ">" )
-      loadingAnimation.from("#scrollingIndicator", {duration: 2, opacity: 0 }, "<");
-
+     
 
       const clock = new THREE.Clock()
       
@@ -717,20 +711,36 @@ ring.add(logoShapes)
 
 
       function render() {
+        requestAnimationFrame(render);
+
         renderer.render(scene, camera);
         CSSRenderer.render( scene, camera );
 
-        requestAnimationFrame(render);
-        // Animate the clipping plane constant
-        
-        // window.requestAnimationFrame(tick)
-       
-        CSSRenderer.render( scene, camera );
-  
+         
       }
 
       render();
 
+        
+        var loadingAnimation = gsap.timeline({repeat: 0, repeatDelay: 0,  onComplete: allowScroll  });
+        loadingAnimation.to(myText, {duration: 6, delay: 4, text:"loading experience"} );
+        loadingAnimation.to(clipPlanes[0], {constant: -4, duration: 0, ease: "slow" }, "0");
+        loadingAnimation.to(loadingAnimationLineMaterial, {duration: 3, opacity: 1,ease: "slow" }, "<")
+        loadingAnimation.to(loadingAnimationLine1.position , {x: 29, duration: 1, ease: "slow"}, 1);
+        loadingAnimation.to(loadingAnimationLine1.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
+        loadingAnimation.to(loadingAnimationLine2.position , {x: -27, duration: 1, ease: "slow"}, 1);
+        loadingAnimation.to(loadingAnimationLine2.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
+        loadingAnimation.to(loadingAnimationLine1.position , {y: -26, duration: 1, ease: "slow"}, 3);
+        loadingAnimation.to(loadingAnimationLine1.rotation , {z: Math.PI / 4, duration: 1}, 3);
+        loadingAnimation.to(loadingAnimationLine2.position , {y: 28, duration: 2, ease: "slow"}, 3);
+        loadingAnimation.to(loadingAnimationLine2.rotation , {z: Math.PI / 4, duration: 1}, 3);
+        loadingAnimation.to(clipPlanes[0], {constant: 6, duration: 2 }, 2);
+        loadingAnimation.to(clipPlanes[0], {constant: 8, duration: 2 }, 4);
+        loadingAnimation.from("#dynamicText", {duration: 2, opacity: 0 }, ">");
+        loadingAnimation.to("#dynamicText", {duration: 4, scrambleText:{text:"Hello", chars:".*.*9", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, "<" )
+        loadingAnimation.to("#dynamicText", {duration: 2, scrambleText:{text:"I am Taylor Ward", chars:".*.*8", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, ">" )
+        loadingAnimation.from("#scrollingIndicator", {duration: 2, opacity: 0 }, "<");
+  
       
       // //Helpers
       // const axesHelper = new THREE.AxesHelper(10 );
@@ -747,7 +757,6 @@ ring.add(logoShapes)
     <div id="smooth-wrapper">
       <div id="smooth-content">
       <main className="flex min-h-screen flex-col items-center justify-between ">
-        <h1 id="headline"></h1>
         <div  className="rounded-lg">
           <div id="canvas"></div>
 

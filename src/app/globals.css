@@ -88,16 +88,13 @@ main {
   position: relative;
 }
 
-h1 {
+#dynamicText {
   color:white;
-  font-size: 12px;
+  font-size: 3px;
   font-family: fot-rodin_prol;
-  font-weight: 100;
   -moz-osx-font-smoothing: grayscale;
 -webkit-font-smoothing: antialiased;
-  position: absolute;
-  top: 250px;
-  left: 50%;
+
 }
 
 #scrollingIndicator {
