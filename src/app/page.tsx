@@ -9,14 +9,12 @@ import { MeshLineGeometry, MeshLineMaterial, raycast } from 'meshline'
 import { gsap } from "gsap";
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUI } from 'dat.gui'
-
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /* The following plugin is a Club GSAP perk */
 import { ScrollSmoother } from "gsap/ScrollSmoother";
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
 import {Text} from 'troika-three-text'
-
 
 import scrollingIndicator from "../../public/Arrow down.png"
 import RodinPro from "../../public/FOT-RodinProL2.otf"
@@ -116,13 +114,15 @@ element.style.color = "#ffffff"
 
 // Create a CSS3DObject
 const cssObject = new CSS3DObject(element);
-cssObject.position.set(0, 20,  50);
+cssObject.position.set(0, 30,  -55);
 scene.add(cssObject);
 
 
 
 const myText = new Text()
 scene.add(myText)
+
+myText.material.transparent = true;
 
 // Set properties to configure:
 myText.text = 'Loading...'
@@ -136,6 +136,7 @@ myText.position.set(-20,-25,-50)
 myText.sync()
 
    let textMarquee;
+   let textMarqueeDesigner
       fontLoader.load(
           "helvetiker_regular.typeface.json",
           (font) => 
@@ -149,6 +150,16 @@ myText.sync()
                   
                   }
               )
+
+              const textGeometryDesigner = new TextGeometry(
+                "Designer", 
+                {
+                    font: font,
+                    size: 2,
+                    depth: 1
+                
+                }
+            )
               textGeometry.computeBoundingBox()
               // textGeometry.translate(
               //     - (textGeometry.boundingBox.max.x - 0.02) * 0.5,
@@ -165,10 +176,15 @@ myText.sync()
             textureText.offset.set(0.25,0.4)
             textureText.wrapS = THREE.RepeatWrapping;
             textureText.wrapT = THREE.RepeatWrapping;
-              const material = new THREE.MeshBasicMaterial({map: textureText, transparent: true })
+              const material = new THREE.MeshBasicMaterial({ color: 0xffffff })
               textMarquee = new THREE.Mesh(textGeometry, material )
               textMarquee.position.x = 150
               textMarquee.position.z = -30
+
+              textMarqueeDesigner = new THREE.Mesh(textGeometryDesigner, material )
+              textMarqueeDesigner.position.x = 150
+              textMarqueeDesigner.position.z = -30
+              scene.add(textMarqueeDesigner)
               scene.add(textMarquee)
 
             }
@@ -249,7 +265,10 @@ myText.sync()
       }
 
       //Topographic Square Border
-      const meshLineMaterial = new MeshLineMaterial({useMap: true, map: textureBG})
+      const meshLineMaterial = new MeshLineMaterial({  color: new THREE.Color(0xffffff), // White color
+        lineWidth: 1, // Adjust as needed
+        transparent: true,
+        opacity: 1})
 
       const meshLineGeometryTop = new MeshLineGeometry()
       meshLineGeometryTop.setPoints(topoSquareTopHalfGeometry,(p) => .5)
@@ -269,7 +288,7 @@ myText.sync()
       topoSquareBottom.add(meshLineBot)
 
       const loadingAnimationLineGeometry = new THREE.CapsuleGeometry( .1, 4, 4, 8 ); 
-      const loadingAnimationLineMaterial = new THREE.MeshBasicMaterial( {map: textureBG , opacity: 0, transparent: true } ); 
+      const loadingAnimationLineMaterial = new THREE.MeshBasicMaterial( { opacity: 0, transparent: true } ); 
       const loadingAnimationLine1 = new THREE.Mesh( loadingAnimationLineGeometry, loadingAnimationLineMaterial );
       const loadingAnimationLine2 = new THREE.Mesh( loadingAnimationLineGeometry, loadingAnimationLineMaterial );
 
@@ -600,8 +619,9 @@ ring.add(logoShapes)
       document.querySelector('#canvas').appendChild(CSSRenderer.domElement);
       
       // Put the mainRenderer on top
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true,  preserveDrawingBuffer: true
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true,  preserveDrawingBuffer: true, 
  });
+ renderer.localClippingEnabled  = true;
       renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1)
 
       renderer.setClearColor(0x000000, 0);
@@ -630,6 +650,8 @@ ring.add(logoShapes)
   //   startScrollAnimations()
       /* Animations */
       const allowScroll = () => {
+        document.body.style.overflow = "auto"; // Unlock scroll after animations
+
         gsap.timeline({
           scrollTrigger: {
             trigger: "#canvas",
@@ -642,13 +664,23 @@ ring.add(logoShapes)
           onComplete: animate
         })
         .to(ring.position, {y: 0})
-        .to(topoSquareTop.position, {y: 50})
+        .to(cssObject.element.style, { opacity: 0, duration: 1 })
+  
+        .to(topoSquareTop.position, {y: 50}, )
+        .to(clipPlanes[0], { constant: 50, duration: 1 }, "<")
         .to(topoSquareBottom.position, {y: -50}, "<")
         .to(ring.rotation, {y: .2, z: 1, x: .35}, ">")
         .to(ring.position, {y: -10}, "<")
-        .to(textMarquee.position , {x: -150}, ">")
-
-
+        .to(textMarquee.position , {x: -200, duration: 20}, ">")
+        .to(textMarqueeDesigner.position , {x: -200, duration: 15}, "<")
+        .to(ring.rotation, {
+          x: "+=2", 
+          y: "+=2", 
+          z: "+=2", }, ">")
+        .to(ring.rotation, {y: 0, z: 0, x: 0}, ">")
+        .to(ring.position, {y: 0}, "<")
+        .to(topoSquareTop.position, {y: 0})
+        .to(topoSquareBottom.position, {y: 0}, "<")
 
       }
 
@@ -658,7 +690,7 @@ ring.add(logoShapes)
         start: 'top top',
         pin: true,
         endTrigger: '#otherID',
-        end: 'bottom 50%+=100px',
+        end: 'bottom 50%+=500px',
         markers: true
     });
 
@@ -723,23 +755,24 @@ ring.add(logoShapes)
 
         
         var loadingAnimation = gsap.timeline({repeat: 0, repeatDelay: 0,  onComplete: allowScroll  });
-        loadingAnimation.to(myText, {duration: 6, delay: 4, text:"loading experience"} );
-        loadingAnimation.to(clipPlanes[0], {constant: -4, duration: 0, ease: "slow" }, "0");
-        loadingAnimation.to(loadingAnimationLineMaterial, {duration: 3, opacity: 1,ease: "slow" }, "<")
+        loadingAnimation.to(myText, {duration: 1, delay: 1, text:"loading experience"} );
+        loadingAnimation.to(clipPlanes[0], {constant: -8, duration: 0, ease: "slow" }, "0");
+        loadingAnimation.to(loadingAnimationLineMaterial, {duration: 1, opacity: 1,ease: "slow" }, "<")
         loadingAnimation.to(loadingAnimationLine1.position , {x: 29, duration: 1, ease: "slow"}, 1);
         loadingAnimation.to(loadingAnimationLine1.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
         loadingAnimation.to(loadingAnimationLine2.position , {x: -27, duration: 1, ease: "slow"}, 1);
         loadingAnimation.to(loadingAnimationLine2.rotation , {z: - Math.PI / 3.8, duration: 2}, 1);
         loadingAnimation.to(loadingAnimationLine1.position , {y: -26, duration: 1, ease: "slow"}, 3);
         loadingAnimation.to(loadingAnimationLine1.rotation , {z: Math.PI / 4, duration: 1}, 3);
-        loadingAnimation.to(loadingAnimationLine2.position , {y: 28, duration: 2, ease: "slow"}, 3);
+        loadingAnimation.to(loadingAnimationLine2.position , {y: 28, duration: 1, ease: "slow"}, 3);
         loadingAnimation.to(loadingAnimationLine2.rotation , {z: Math.PI / 4, duration: 1}, 3);
-        loadingAnimation.to(clipPlanes[0], {constant: 6, duration: 2 }, 2);
-        loadingAnimation.to(clipPlanes[0], {constant: 8, duration: 2 }, 4);
-        loadingAnimation.from("#dynamicText", {duration: 2, opacity: 0 }, ">");
-        loadingAnimation.to("#dynamicText", {duration: 4, scrambleText:{text:"Hello", chars:".*.*9", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, "<" )
-        loadingAnimation.to("#dynamicText", {duration: 2, scrambleText:{text:"I am Taylor Ward", chars:".*.*8", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, ">" )
-        loadingAnimation.from("#scrollingIndicator", {duration: 2, opacity: 0 }, "<");
+        loadingAnimation.to(clipPlanes[0], {constant: 6, duration: 1 }, 2);
+        loadingAnimation.to(clipPlanes[0], {constant: 8, duration: 1 }, 4);
+        loadingAnimation.from("#dynamicText", {duration: 1, opacity: 0 }, ">");
+        loadingAnimation.to(myText.material, { opacity: 0, duration: 1 });
+        loadingAnimation.to("#dynamicText", {duration: 1, scrambleText:{text:"Hello", chars:".*.*9", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, "<" )
+        loadingAnimation.to("#dynamicText", {duration: 1, scrambleText:{text:"I am Taylor Ward", chars:".*.*8", delimiter: " ", speed: .4, revealDelay:0.25, tweenLength:true}}, ">" )
+        loadingAnimation.from("#scrollingIndicator", {duration: 1, opacity: 0 }, "<");
   
       
       // //Helpers
@@ -763,10 +796,12 @@ ring.add(logoShapes)
             <div className="loading-pattern rounded-lg">
     
             </div>
-            <img id="scrollingIndicator" src={scrollingIndicator.src}></img>
+            <div>Content</div>
         </div>
       </main>
       </div>
+      <img id="scrollingIndicator" src={scrollingIndicator.src}></img>
+
     </div>
   )
 }

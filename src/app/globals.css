@@ -16,9 +16,21 @@
   }
 }
 
+html {
+  background-image: url('../../public/bg-gradient.jpg');
+  background-size: cover;
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+  height: 100%;
+
+}
+
 body {
   color: rgb(var(--foreground-rgb));
-  background: #252525;
+  /* background: #252525; */
 }
 
 .pattern-border {
@@ -98,7 +110,7 @@ main {
 }
 
 #scrollingIndicator {
-  position: absolute;
+  position: fixed;
   left: 50%;
   transform: translateX(-50%);
   width: 100px;
