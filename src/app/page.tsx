@@ -75,7 +75,6 @@ export default function Home() {
 
       let directionalLight = new THREE.DirectionalLight('#ffffff', 10)
       directionalLight.position.set(1,-5, 10)
-      directionalLight.point
 
       scene.add(directionalLight)
 
