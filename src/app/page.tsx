@@ -22,7 +22,7 @@ import RodinPro from "../../public/FOT-RodinProL2.otf"
 // Textures
 import topoPattern from '../../public/topographic-pattern.png'
 console.log(topoPattern)
-import topoTextPattern from '../../public/topographic Pattern Text.png'
+import topoTextPattern from '../../public/topographic_pattern_text.png'
 import backgroundGradient from '../../public/newtop.png'
 import { text } from 'node:stream/consumers';
 
