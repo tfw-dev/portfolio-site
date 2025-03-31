@@ -134,8 +134,8 @@ myText.position.set(-20,-25,-50)
 // Update the rendering:
 myText.sync?.()
 
-   let textMarquee;
-   let textMarqueeDesigner
+   let textMarquee: any = null;
+   let textMarqueeDesigner: any = null;
       fontLoader.load(
           "helvetiker_regular.typeface.json",
           (font) => 
@@ -262,11 +262,12 @@ myText.sync?.()
         y: 2.5,
         z: -50
       }
+      const resolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
 
       //Topographic Square Border
       const meshLineMaterial = new MeshLineMaterial({  color: new THREE.Color(0xffffff), // White color
         lineWidth: 1, // Adjust as needed
-        transparent: true,
+        resolution: resolution,
         opacity: 1})
 
       const meshLineGeometryTop = new MeshLineGeometry()
@@ -384,7 +385,7 @@ myText.sync?.()
       topoSquareTop.add( squareTopHalfMeshFaded );
       topoSquareBottom.add( squareBotHalfMeshFaded );
 
-      let pos = topoSquareTopHalfGeometry.attributes.position;
+      let pos = topoSquareTopHalfGeometry.attributes.position as THREE.BufferAttribute;
       let b3 = new THREE.Box3().setFromBufferAttribute(pos);
       let b3size = new THREE.Vector3();
       b3.getSize(b3size);
@@ -456,7 +457,7 @@ myText.sync?.()
       radius: 2// Radius of the circle
     };
     
-    function setCircleLogo(shape) {
+    function setCircleLogo(shape: THREE.Shape) {
       const { x, y, radius } = circleLogoDimensions;
     
       shape.moveTo(x + radius, y);
@@ -470,7 +471,7 @@ myText.sync?.()
       radius: 1.2// Radius for rounded corners
     };
     
-    function setTriangleLogo(shape) {
+    function setTriangleLogo(shape: THREE.Shape) {
       const { x1, y1, x2, y2, x3, y3, radius } = triangleDimensions;
     
       // Move to the starting point, offset by the radius
@@ -502,7 +503,8 @@ myText.sync?.()
     const triangleLogoGeometry = new THREE.ShapeGeometry( triangleLogo );
 
     //Topographic Square Border
-    const logoMaterial = new MeshLineMaterial({useMap: true, map: textureBG, lineWidth: 1 })
+
+    const logoMaterial = new MeshLineMaterial({useMap: 1, resolution: resolution, map: textureBG, lineWidth: 1 })
 
     const squareLogoMeshLineGeometry = new MeshLineGeometry()
     squareLogoMeshLineGeometry .setPoints(squareLogoGeometry,(p) => .6)
@@ -512,11 +514,11 @@ myText.sync?.()
     triangleLogoMeshLineGeometry .setPoints(triangleLogoGeometry,(p) => .6)
 
 // Helper function to create a mesh and set its position
-function createMesh(geometry, material, position, rotation) {
+function createMesh(geometry: THREE.BufferGeometry, material: THREE.Material, position?: THREE.Vector3, rotation?: THREE.Euler   ) {
   const mesh = new THREE.Mesh(geometry, material);
   if (position) {
       mesh.position.set(position.x || 0, position.y || 0, position.z || 0);
-      mesh.rotation.set(0,rotation.y || 0,0)
+      mesh.rotation.set(0,rotation?.y || 0,0)
   }
   return mesh;
 }
@@ -524,9 +526,26 @@ function createMesh(geometry, material, position, rotation) {
 // Create the logo meshes
 const logoShapes = new THREE.Group();
 
-const squareLogoMesh = createMesh(squareLogoMeshLineGeometry, logoMaterial, { x: -8.5, y: -2,z: 35},{y: -0.1});
-const triangleLogoMesh = createMesh(triangleLogoMeshLineGeometry, logoMaterial, { x: -1.5, y: -2,z: 35.5 }, {y: 0});
-const circleLogoMesh = createMesh(circleLogoMeshLineGeometry, logoMaterial, { x: 4, y: -2, z: 35}, {y: 0.15});
+const squareLogoMesh = createMesh(
+  squareLogoMeshLineGeometry,
+  logoMaterial,
+  new THREE.Vector3(-8.5, -2, 35), // Create a Vector3 for position
+  new THREE.Euler(0, -0.1, 0)       // Create an Euler for rotation
+);
+
+const triangleLogoMesh = createMesh(
+  triangleLogoMeshLineGeometry,
+  logoMaterial,
+  new THREE.Vector3(-1.5, -2, 35.5),
+  new THREE.Euler(0, 0, 0)
+);
+
+const circleLogoMesh = createMesh(
+  circleLogoMeshLineGeometry,
+  logoMaterial,
+  new THREE.Vector3(4, -2, 35),
+  new THREE.Euler(0, 0.15, 0)
+);
 
 // Add the meshes to the scene (or any parent group)
 logoShapes.add(squareLogoMesh);;
@@ -615,7 +634,7 @@ ring.add(logoShapes)
       // Setup Renderers
       CSSRenderer = new CSS3DRenderer();
       CSSRenderer.setSize(innerWidth, innerHeight);
-      document.querySelector('#canvas').appendChild(CSSRenderer.domElement);
+      document.querySelector('#canvas')?.appendChild(CSSRenderer.domElement);
       
       // Put the mainRenderer on top
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true,  preserveDrawingBuffer: true, 
@@ -625,8 +644,8 @@ ring.add(logoShapes)
 
       renderer.setClearColor(0x000000, 0);
       renderer.domElement.style.position = 'absolute';
-      renderer.domElement.style.top = 0;
-      renderer.domElement.style.zIndex = 1;
+      renderer.domElement.style.top = "0px";
+      renderer.domElement.style.zIndex = "1";
       renderer.setSize(innerWidth, innerHeight);
       // Enable sRGB encoding for the renderer output
 
