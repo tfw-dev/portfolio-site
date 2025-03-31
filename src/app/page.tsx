@@ -132,7 +132,7 @@ myText.position.set(-20,-25,-50)
 
 
 // Update the rendering:
-myText.sync()
+myText.sync?.()
 
    let textMarquee;
    let textMarqueeDesigner
